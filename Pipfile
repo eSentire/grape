@@ -1,0 +1,19 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+docker = "*"
+mypy = "*"
+psycopg2-binary = "*"
+pylint = "*"
+pytest = "*"
+PyYAML = "*"
+requests = "*"
+pytest-cov = "*"
+
+[requires]
+python_version = "3.8"

@@ -1,0 +1,21 @@
+# Data to access an external grafana server.
+# If any fields are not present, then the user will be
+# prompted for them.
+url: 'https://metrics-dashboard.example.com'
+username: 'administrator'
+password: 'Npl7hZ2pfvUdwjBUe863Bgq2'
+
+# The passwords for each database can optionally
+# be specified. If they are not specified, then
+# they must be entered manually because grafana
+# does not export them.
+# If the password field is not present, then the
+# user will be prompted.
+databases:
+  - url: 'https://metrics-influx-db.example.com:8086'
+    name: 'InfluxDB'
+    password: 'NJYQMJpDon2ZYBYmBITdokdK'
+  - url: 'metrics-data.i4r9tql5gl12.eu-west-1.rds.amazonaws.com:5432'
+    name: 'PostgreSQL'
+    database: 'metrics_data'
+    password: 'r7dSNdKziYaQzxKxraSjfn21'

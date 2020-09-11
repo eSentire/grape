@@ -1,0 +1,11 @@
+*~
+Pipfile.lock
+.wheel-install
+backup.tar
+keep/
+build/
+dist/
+grape.egg-info/
+test/grape_test.zip
+test/grape_testpg/
+.coverage

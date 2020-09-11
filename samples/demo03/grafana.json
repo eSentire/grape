@@ -1,0 +1,1331 @@
+{
+  "datasources": [
+    {
+      "id": 1,
+      "orgId": 1,
+      "name": "demo03pg",
+      "type": "postgres",
+      "typeLogoUrl": "public/app/plugins/datasource/postgres/img/postgresql_logo.svg",
+      "access": "proxy",
+      "url": "172.17.0.1:4421",
+      "password": "password",
+      "user": "postgres",
+      "database": "postgres",
+      "basicAuth": false,
+      "isDefault": false,
+      "jsonData": {
+        "postgresVersion": 1000,
+        "sslmode": "disable"
+      },
+      "readOnly": false
+    }
+  ],
+  "folders": [
+    {
+      "id": 1,
+      "uid": "BM8Ij_vGk",
+      "title": "Demo03 Folder"
+    }
+  ],
+  "dashboards": [
+    {
+      "meta": {
+        "type": "db",
+        "canSave": true,
+        "canEdit": true,
+        "canAdmin": true,
+        "canStar": true,
+        "slug": "demo03-dashboard",
+        "url": "/d/7XiLq_DMk/demo03-dashboard",
+        "expires": "0001-01-01T00:00:00Z",
+        "created": "2020-09-09T01:06:33Z",
+        "updated": "2020-09-09T01:07:38Z",
+        "updatedBy": "admin",
+        "createdBy": "admin",
+        "version": 2,
+        "hasAcl": false,
+        "isFolder": false,
+        "folderId": 1,
+        "folderTitle": "Demo03 Folder",
+        "folderUrl": "/dashboards/f/BM8Ij_vGk/demo03-folder",
+        "provisioned": false,
+        "provisionedExternalId": ""
+      },
+      "dashboard": {
+        "annotations": {
+          "list": [
+            {
+              "builtIn": 1,
+              "datasource": "-- Grafana --",
+              "enable": true,
+              "hide": true,
+              "iconColor": "rgba(0, 211, 255, 1)",
+              "name": "Annotations & Alerts",
+              "type": "dashboard"
+            }
+          ]
+        },
+        "editable": true,
+        "gnetId": null,
+        "graphTooltip": 0,
+        "id": 2,
+        "links": [],
+        "panels": [
+          {
+            "datasource": "demo03pg",
+            "fieldConfig": {
+              "defaults": {
+                "custom": {},
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "purple",
+                      "value": 20
+                    },
+                    {
+                      "color": "blue",
+                      "value": 30
+                    },
+                    {
+                      "color": "orange",
+                      "value": 50
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 70
+                    },
+                    {
+                      "color": "green",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 6,
+              "w": 4,
+              "x": 0,
+              "y": 0
+            },
+            "id": 2,
+            "options": {
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "last"
+                ],
+                "values": false
+              },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
+            },
+            "pluginVersion": "7.0.0",
+            "targets": [
+              {
+                "format": "time_series",
+                "group": [],
+                "metricColumn": "metric",
+                "rawQuery": true,
+                "rawSql": "SELECT\n  tstamp AS \"time\",\n  metric AS metric,\n  value\nFROM ts1\nWHERE\n  $__timeFilter(tstamp) AND metric = 'proc01'\nORDER BY 1,2",
+                "refId": "A",
+                "select": [
+                  [
+                    {
+                      "params": [
+                        "value"
+                      ],
+                      "type": "column"
+                    }
+                  ]
+                ],
+                "table": "ts1",
+                "timeColumn": "tstamp",
+                "timeColumnType": "timestamptz",
+                "where": [
+                  {
+                    "name": "$__timeFilter",
+                    "params": [],
+                    "type": "macro"
+                  }
+                ]
+              }
+            ],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "proc01",
+            "type": "gauge"
+          },
+          {
+            "datasource": "demo03pg",
+            "fieldConfig": {
+              "defaults": {
+                "custom": {},
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "purple",
+                      "value": 20
+                    },
+                    {
+                      "color": "blue",
+                      "value": 30
+                    },
+                    {
+                      "color": "orange",
+                      "value": 50
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 70
+                    },
+                    {
+                      "color": "green",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 6,
+              "w": 4,
+              "x": 4,
+              "y": 0
+            },
+            "id": 7,
+            "options": {
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "last"
+                ],
+                "values": false
+              },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
+            },
+            "pluginVersion": "7.0.0",
+            "targets": [
+              {
+                "format": "time_series",
+                "group": [],
+                "metricColumn": "metric",
+                "rawQuery": true,
+                "rawSql": "SELECT\n  tstamp AS \"time\",\n  metric AS metric,\n  value\nFROM ts1\nWHERE\n  $__timeFilter(tstamp) AND metric = 'proc02'\nORDER BY 1,2",
+                "refId": "A",
+                "select": [
+                  [
+                    {
+                      "params": [
+                        "value"
+                      ],
+                      "type": "column"
+                    }
+                  ]
+                ],
+                "table": "ts1",
+                "timeColumn": "tstamp",
+                "timeColumnType": "timestamptz",
+                "where": [
+                  {
+                    "name": "$__timeFilter",
+                    "params": [],
+                    "type": "macro"
+                  }
+                ]
+              }
+            ],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "proc02",
+            "type": "gauge"
+          },
+          {
+            "datasource": "demo03pg",
+            "fieldConfig": {
+              "defaults": {
+                "custom": {},
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "purple",
+                      "value": 20
+                    },
+                    {
+                      "color": "blue",
+                      "value": 30
+                    },
+                    {
+                      "color": "orange",
+                      "value": 50
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 70
+                    },
+                    {
+                      "color": "green",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 6,
+              "w": 4,
+              "x": 8,
+              "y": 0
+            },
+            "id": 4,
+            "options": {
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "last"
+                ],
+                "values": false
+              },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
+            },
+            "pluginVersion": "7.0.0",
+            "targets": [
+              {
+                "format": "time_series",
+                "group": [],
+                "metricColumn": "metric",
+                "rawQuery": true,
+                "rawSql": "SELECT\n  tstamp AS \"time\",\n  metric AS metric,\n  value\nFROM ts1\nWHERE\n  $__timeFilter(tstamp) AND metric = 'proc03'\nORDER BY 1,2",
+                "refId": "A",
+                "select": [
+                  [
+                    {
+                      "params": [
+                        "value"
+                      ],
+                      "type": "column"
+                    }
+                  ]
+                ],
+                "table": "ts1",
+                "timeColumn": "tstamp",
+                "timeColumnType": "timestamptz",
+                "where": [
+                  {
+                    "name": "$__timeFilter",
+                    "params": [],
+                    "type": "macro"
+                  }
+                ]
+              }
+            ],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "proc03",
+            "type": "gauge"
+          },
+          {
+            "datasource": "demo03pg",
+            "fieldConfig": {
+              "defaults": {
+                "custom": {},
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "purple",
+                      "value": 20
+                    },
+                    {
+                      "color": "blue",
+                      "value": 30
+                    },
+                    {
+                      "color": "orange",
+                      "value": 50
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 70
+                    },
+                    {
+                      "color": "green",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 6,
+              "w": 4,
+              "x": 12,
+              "y": 0
+            },
+            "id": 5,
+            "options": {
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "last"
+                ],
+                "values": false
+              },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
+            },
+            "pluginVersion": "7.0.0",
+            "targets": [
+              {
+                "format": "time_series",
+                "group": [],
+                "metricColumn": "metric",
+                "rawQuery": true,
+                "rawSql": "SELECT\n  tstamp AS \"time\",\n  metric AS metric,\n  value\nFROM ts1\nWHERE\n  $__timeFilter(tstamp) AND metric = 'proc04'\nORDER BY 1,2",
+                "refId": "A",
+                "select": [
+                  [
+                    {
+                      "params": [
+                        "value"
+                      ],
+                      "type": "column"
+                    }
+                  ]
+                ],
+                "table": "ts1",
+                "timeColumn": "tstamp",
+                "timeColumnType": "timestamptz",
+                "where": [
+                  {
+                    "name": "$__timeFilter",
+                    "params": [],
+                    "type": "macro"
+                  }
+                ]
+              }
+            ],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "proc04",
+            "type": "gauge"
+          },
+          {
+            "datasource": "demo03pg",
+            "fieldConfig": {
+              "defaults": {
+                "custom": {},
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "purple",
+                      "value": 20
+                    },
+                    {
+                      "color": "blue",
+                      "value": 30
+                    },
+                    {
+                      "color": "orange",
+                      "value": 50
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 70
+                    },
+                    {
+                      "color": "green",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 6,
+              "w": 4,
+              "x": 16,
+              "y": 0
+            },
+            "id": 6,
+            "options": {
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "last"
+                ],
+                "values": false
+              },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
+            },
+            "pluginVersion": "7.0.0",
+            "targets": [
+              {
+                "format": "time_series",
+                "group": [],
+                "metricColumn": "metric",
+                "rawQuery": true,
+                "rawSql": "SELECT\n  tstamp AS \"time\",\n  metric AS metric,\n  value\nFROM ts1\nWHERE\n  $__timeFilter(tstamp) AND metric = 'proc05'\nORDER BY 1,2",
+                "refId": "A",
+                "select": [
+                  [
+                    {
+                      "params": [
+                        "value"
+                      ],
+                      "type": "column"
+                    }
+                  ]
+                ],
+                "table": "ts1",
+                "timeColumn": "tstamp",
+                "timeColumnType": "timestamptz",
+                "where": [
+                  {
+                    "name": "$__timeFilter",
+                    "params": [],
+                    "type": "macro"
+                  }
+                ]
+              }
+            ],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "proc05",
+            "type": "gauge"
+          },
+          {
+            "datasource": "demo03pg",
+            "fieldConfig": {
+              "defaults": {
+                "custom": {},
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "purple",
+                      "value": 20
+                    },
+                    {
+                      "color": "blue",
+                      "value": 30
+                    },
+                    {
+                      "color": "orange",
+                      "value": 50
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 70
+                    },
+                    {
+                      "color": "green",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 6,
+              "w": 4,
+              "x": 0,
+              "y": 6
+            },
+            "id": 3,
+            "options": {
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "last"
+                ],
+                "values": false
+              },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
+            },
+            "pluginVersion": "7.0.0",
+            "targets": [
+              {
+                "format": "time_series",
+                "group": [],
+                "metricColumn": "metric",
+                "rawQuery": true,
+                "rawSql": "SELECT\n  tstamp AS \"time\",\n  metric AS metric,\n  value\nFROM ts1\nWHERE\n  $__timeFilter(tstamp) AND metric = 'proc06'\nORDER BY 1,2",
+                "refId": "A",
+                "select": [
+                  [
+                    {
+                      "params": [
+                        "value"
+                      ],
+                      "type": "column"
+                    }
+                  ]
+                ],
+                "table": "ts1",
+                "timeColumn": "tstamp",
+                "timeColumnType": "timestamptz",
+                "where": [
+                  {
+                    "name": "$__timeFilter",
+                    "params": [],
+                    "type": "macro"
+                  }
+                ]
+              }
+            ],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "proc06",
+            "type": "gauge"
+          },
+          {
+            "datasource": "demo03pg",
+            "fieldConfig": {
+              "defaults": {
+                "custom": {},
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "purple",
+                      "value": 20
+                    },
+                    {
+                      "color": "blue",
+                      "value": 30
+                    },
+                    {
+                      "color": "orange",
+                      "value": 50
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 70
+                    },
+                    {
+                      "color": "green",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 6,
+              "w": 4,
+              "x": 4,
+              "y": 6
+            },
+            "id": 8,
+            "options": {
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "last"
+                ],
+                "values": false
+              },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
+            },
+            "pluginVersion": "7.0.0",
+            "targets": [
+              {
+                "format": "time_series",
+                "group": [],
+                "metricColumn": "metric",
+                "rawQuery": true,
+                "rawSql": "SELECT\n  tstamp AS \"time\",\n  metric AS metric,\n  value\nFROM ts1\nWHERE\n  $__timeFilter(tstamp) AND metric = 'proc07'\nORDER BY 1,2",
+                "refId": "A",
+                "select": [
+                  [
+                    {
+                      "params": [
+                        "value"
+                      ],
+                      "type": "column"
+                    }
+                  ]
+                ],
+                "table": "ts1",
+                "timeColumn": "tstamp",
+                "timeColumnType": "timestamptz",
+                "where": [
+                  {
+                    "name": "$__timeFilter",
+                    "params": [],
+                    "type": "macro"
+                  }
+                ]
+              }
+            ],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "proc07",
+            "type": "gauge"
+          },
+          {
+            "datasource": "demo03pg",
+            "fieldConfig": {
+              "defaults": {
+                "custom": {},
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "purple",
+                      "value": 20
+                    },
+                    {
+                      "color": "blue",
+                      "value": 30
+                    },
+                    {
+                      "color": "orange",
+                      "value": 50
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 70
+                    },
+                    {
+                      "color": "green",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 6,
+              "w": 4,
+              "x": 8,
+              "y": 6
+            },
+            "id": 9,
+            "options": {
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "last"
+                ],
+                "values": false
+              },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
+            },
+            "pluginVersion": "7.0.0",
+            "targets": [
+              {
+                "format": "time_series",
+                "group": [],
+                "metricColumn": "metric",
+                "rawQuery": true,
+                "rawSql": "SELECT\n  tstamp AS \"time\",\n  metric AS metric,\n  value\nFROM ts1\nWHERE\n  $__timeFilter(tstamp) AND metric = 'proc08'\nORDER BY 1,2",
+                "refId": "A",
+                "select": [
+                  [
+                    {
+                      "params": [
+                        "value"
+                      ],
+                      "type": "column"
+                    }
+                  ]
+                ],
+                "table": "ts1",
+                "timeColumn": "tstamp",
+                "timeColumnType": "timestamptz",
+                "where": [
+                  {
+                    "name": "$__timeFilter",
+                    "params": [],
+                    "type": "macro"
+                  }
+                ]
+              }
+            ],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "proc08",
+            "type": "gauge"
+          },
+          {
+            "datasource": "demo03pg",
+            "fieldConfig": {
+              "defaults": {
+                "custom": {},
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "purple",
+                      "value": 20
+                    },
+                    {
+                      "color": "blue",
+                      "value": 30
+                    },
+                    {
+                      "color": "orange",
+                      "value": 50
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 70
+                    },
+                    {
+                      "color": "green",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 6,
+              "w": 4,
+              "x": 12,
+              "y": 6
+            },
+            "id": 10,
+            "options": {
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "last"
+                ],
+                "values": false
+              },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
+            },
+            "pluginVersion": "7.0.0",
+            "targets": [
+              {
+                "format": "time_series",
+                "group": [],
+                "metricColumn": "metric",
+                "rawQuery": true,
+                "rawSql": "SELECT\n  tstamp AS \"time\",\n  metric AS metric,\n  value\nFROM ts1\nWHERE\n  $__timeFilter(tstamp) AND metric = 'proc09'\nORDER BY 1,2",
+                "refId": "A",
+                "select": [
+                  [
+                    {
+                      "params": [
+                        "value"
+                      ],
+                      "type": "column"
+                    }
+                  ]
+                ],
+                "table": "ts1",
+                "timeColumn": "tstamp",
+                "timeColumnType": "timestamptz",
+                "where": [
+                  {
+                    "name": "$__timeFilter",
+                    "params": [],
+                    "type": "macro"
+                  }
+                ]
+              }
+            ],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "proc09",
+            "type": "gauge"
+          },
+          {
+            "datasource": "demo03pg",
+            "fieldConfig": {
+              "defaults": {
+                "custom": {},
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "purple",
+                      "value": 20
+                    },
+                    {
+                      "color": "blue",
+                      "value": 30
+                    },
+                    {
+                      "color": "orange",
+                      "value": 50
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 70
+                    },
+                    {
+                      "color": "green",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 6,
+              "w": 4,
+              "x": 16,
+              "y": 6
+            },
+            "id": 11,
+            "options": {
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "last"
+                ],
+                "values": false
+              },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
+            },
+            "pluginVersion": "7.0.0",
+            "targets": [
+              {
+                "format": "time_series",
+                "group": [],
+                "metricColumn": "metric",
+                "rawQuery": true,
+                "rawSql": "SELECT\n  tstamp AS \"time\",\n  metric AS metric,\n  value\nFROM ts1\nWHERE\n  $__timeFilter(tstamp) AND metric = 'proc10'\nORDER BY 1,2",
+                "refId": "A",
+                "select": [
+                  [
+                    {
+                      "params": [
+                        "value"
+                      ],
+                      "type": "column"
+                    }
+                  ]
+                ],
+                "table": "ts1",
+                "timeColumn": "tstamp",
+                "timeColumnType": "timestamptz",
+                "where": [
+                  {
+                    "name": "$__timeFilter",
+                    "params": [],
+                    "type": "macro"
+                  }
+                ]
+              }
+            ],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "proc10",
+            "type": "gauge"
+          },
+          {
+            "aliasColors": {},
+            "bars": true,
+            "dashLength": 10,
+            "dashes": false,
+            "datasource": "demo03pg",
+            "fieldConfig": {
+              "defaults": {
+                "custom": {}
+              },
+              "overrides": []
+            },
+            "fill": 1,
+            "fillGradient": 0,
+            "gridPos": {
+              "h": 9,
+              "w": 11,
+              "x": 0,
+              "y": 12
+            },
+            "hiddenSeries": false,
+            "id": 13,
+            "legend": {
+              "avg": false,
+              "current": false,
+              "max": false,
+              "min": false,
+              "show": true,
+              "total": false,
+              "values": false
+            },
+            "lines": false,
+            "linewidth": 1,
+            "nullPointMode": "null",
+            "options": {
+              "dataLinks": []
+            },
+            "percentage": false,
+            "pointradius": 2,
+            "points": false,
+            "renderer": "flot",
+            "seriesOverrides": [],
+            "spaceLength": 10,
+            "stack": true,
+            "steppedLine": false,
+            "targets": [
+              {
+                "format": "time_series",
+                "group": [],
+                "metricColumn": "metric",
+                "rawQuery": false,
+                "rawSql": "SELECT\n  tstamp AS \"time\",\n  metric AS metric,\n  value\nFROM ts1\nWHERE\n  $__timeFilter(tstamp)\nORDER BY 1,2",
+                "refId": "A",
+                "select": [
+                  [
+                    {
+                      "params": [
+                        "value"
+                      ],
+                      "type": "column"
+                    }
+                  ]
+                ],
+                "table": "ts1",
+                "timeColumn": "tstamp",
+                "timeColumnType": "timestamptz",
+                "where": [
+                  {
+                    "name": "$__timeFilter",
+                    "params": [],
+                    "type": "macro"
+                  }
+                ]
+              }
+            ],
+            "thresholds": [],
+            "timeFrom": null,
+            "timeRegions": [],
+            "timeShift": null,
+            "title": "Chart",
+            "tooltip": {
+              "shared": true,
+              "sort": 0,
+              "value_type": "individual"
+            },
+            "type": "graph",
+            "xaxis": {
+              "buckets": null,
+              "mode": "time",
+              "name": null,
+              "show": true,
+              "values": []
+            },
+            "yaxes": [
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "max": null,
+                "min": null,
+                "show": true
+              },
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "max": null,
+                "min": null,
+                "show": true
+              }
+            ],
+            "yaxis": {
+              "align": false,
+              "alignLevel": null
+            }
+          },
+          {
+            "datasource": "demo03pg",
+            "fieldConfig": {
+              "defaults": {
+                "custom": {},
+                "mappings": [],
+                "max": 100,
+                "min": 0,
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "purple",
+                      "value": 20
+                    },
+                    {
+                      "color": "#EAB839",
+                      "value": 30
+                    },
+                    {
+                      "color": "#6ED0E0",
+                      "value": 40
+                    },
+                    {
+                      "color": "#EF843C",
+                      "value": 50
+                    },
+                    {
+                      "color": "#E24D42",
+                      "value": 60
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 9,
+              "w": 9,
+              "x": 11,
+              "y": 12
+            },
+            "id": 15,
+            "options": {
+              "displayMode": "gradient",
+              "orientation": "horizontal",
+              "reduceOptions": {
+                "calcs": [
+                  "last"
+                ],
+                "values": false
+              },
+              "showUnfilled": true
+            },
+            "pluginVersion": "7.0.0",
+            "targets": [
+              {
+                "format": "time_series",
+                "group": [],
+                "metricColumn": "metric",
+                "rawQuery": true,
+                "rawSql": "SELECT\n  tstamp AS \"time\",\n  metric AS metric,\n  value\nFROM ts1\nWHERE\n  $__timeFilter(tstamp) AND metric = 'proc01'\nORDER BY 1,2",
+                "refId": "A",
+                "select": [
+                  [
+                    {
+                      "params": [
+                        "value"
+                      ],
+                      "type": "column"
+                    }
+                  ]
+                ],
+                "table": "ts1",
+                "timeColumn": "tstamp",
+                "timeColumnType": "timestamptz",
+                "where": [
+                  {
+                    "name": "$__timeFilter",
+                    "params": [],
+                    "type": "macro"
+                  }
+                ]
+              },
+              {
+                "format": "time_series",
+                "group": [],
+                "metricColumn": "metric",
+                "rawQuery": true,
+                "rawSql": "SELECT\n  tstamp AS \"time\",\n  metric AS metric,\n  value\nFROM ts1\nWHERE\n  $__timeFilter(tstamp) AND metric = 'proc02'\nORDER BY 1,2",
+                "refId": "B",
+                "select": [
+                  [
+                    {
+                      "params": [
+                        "value"
+                      ],
+                      "type": "column"
+                    }
+                  ]
+                ],
+                "table": "ts1",
+                "timeColumn": "tstamp",
+                "timeColumnType": "timestamptz",
+                "where": [
+                  {
+                    "name": "$__timeFilter",
+                    "params": [],
+                    "type": "macro"
+                  }
+                ]
+              },
+              {
+                "format": "time_series",
+                "group": [],
+                "metricColumn": "none",
+                "rawQuery": true,
+                "rawSql": "SELECT\n  tstamp AS \"time\",\n  metric AS metric,\n  value\nFROM ts1\nWHERE\n  $__timeFilter(tstamp) AND metric = 'proc03'\nORDER BY 1,2\n",
+                "refId": "C",
+                "select": [
+                  [
+                    {
+                      "params": [
+                        "value"
+                      ],
+                      "type": "column"
+                    }
+                  ]
+                ],
+                "timeColumn": "time",
+                "where": [
+                  {
+                    "name": "$__timeFilter",
+                    "params": [],
+                    "type": "macro"
+                  }
+                ]
+              },
+              {
+                "format": "time_series",
+                "group": [],
+                "metricColumn": "none",
+                "rawQuery": true,
+                "rawSql": "SELECT\n  tstamp AS \"time\",\n  metric AS metric,\n  value\nFROM ts1\nWHERE\n  $__timeFilter(tstamp) AND metric = 'proc04'\nORDER BY 1,2\n",
+                "refId": "D",
+                "select": [
+                  [
+                    {
+                      "params": [
+                        "value"
+                      ],
+                      "type": "column"
+                    }
+                  ]
+                ],
+                "timeColumn": "time",
+                "where": [
+                  {
+                    "name": "$__timeFilter",
+                    "params": [],
+                    "type": "macro"
+                  }
+                ]
+              },
+              {
+                "format": "time_series",
+                "group": [],
+                "metricColumn": "none",
+                "rawQuery": true,
+                "rawSql": "SELECT\n  tstamp AS \"time\",\n  metric AS metric,\n  value\nFROM ts1\nWHERE\n  $__timeFilter(tstamp) AND metric = 'proc05'\nORDER BY 1,2\n",
+                "refId": "E",
+                "select": [
+                  [
+                    {
+                      "params": [
+                        "value"
+                      ],
+                      "type": "column"
+                    }
+                  ]
+                ],
+                "timeColumn": "time",
+                "where": [
+                  {
+                    "name": "$__timeFilter",
+                    "params": [],
+                    "type": "macro"
+                  }
+                ]
+              }
+            ],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "Another View",
+            "type": "bargauge"
+          }
+        ],
+        "refresh": false,
+        "schemaVersion": 25,
+        "style": "dark",
+        "tags": [],
+        "templating": {
+          "list": []
+        },
+        "time": {
+          "from": "2020-09-01T07:00:00.000Z",
+          "to": "2020-09-09T06:59:59.000Z"
+        },
+        "timepicker": {},
+        "timezone": "",
+        "title": "Demo03 Dashboard",
+        "uid": "7XiLq_DMk",
+        "version": 2
+      },
+      "folderId": 1
+    }
+  ]
+}
