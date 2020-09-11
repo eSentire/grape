@@ -91,6 +91,8 @@ Program help is available via the `-h` command:
 $ pipenv run grape help
 ```
 
+To get help about the available make commands type: `make help`.
+
 ### Create
 To create the infrastructure:
 ```bash
