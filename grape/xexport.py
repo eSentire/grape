@@ -133,7 +133,7 @@ def main():
     'main'
     opts = getopts()
     initv(opts.verbose)
-    info(f'export to {opts.xconf}')
+    info(f'export using {opts.xconf}')
     conf = get_conf(opts.base, opts.fname, opts.grxport, opts.pgxport)
     xexport(conf, opts.xconf)
     info('done')
