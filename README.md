@@ -1,5 +1,5 @@
 # grape
-[![Releases](https://img.shields.io/github/release/jlinoff/grape.svg?style=flat)](https://github.com/jlinoff/grape/releases)
+[![Releases](https://img.shields.io/github/release/eSentire/grape.svg?style=flat)](https://github.com/eSentire/grape/releases)
 
 Grafana Prototyping Environment
 
