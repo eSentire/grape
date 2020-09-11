@@ -1,7 +1,7 @@
 # grape
 [![Releases](https://img.shields.io/github/release/jlinoff/grape.svg?style=flat)](https://github.com/jlinoff/grape/releases)
 
-Grafana Prototype Environment
+Grafana Prototyping Environment
 
 <details><summary>Table of Contents</summary>
 
