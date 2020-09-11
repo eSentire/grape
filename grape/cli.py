@@ -121,28 +121,36 @@ def main():
         'import': ximport.main,
         'export': xexport.main,
     }
-    arg = sys.argv[1].lower()
-    if arg not in fmap:
-        # look for partial matches.
-        # this allows the user specify abbreviated
-        # forms like "cr".
-        for key in fmap:
-            if key.startswith(arg):
-                arg = key
-                break
+    if sys.argv[1] == '-V':
+        # Special case handling because case matters.
+        fct = fmap[sys.argv[1]]
+    else:
+        arg = sys.argv[1].lower()
         if arg not in fmap:
-            # if it still doesn't match, exit
-            # stage left.
-            sys.stderr.write('ERROR: unknown command, '
-                             'please run this command for more '
-                             f'information: {PROGRAM} help')
-            sys.exit(1)
+            # look for partial matches.
+            # this allows the user specify abbreviated
+            # forms like "cr".
+            for key in fmap:
+                if key.startswith(arg) and not arg.startswith('-'):
+                    arg = key
+                    break
+            if arg not in fmap:
+                # if it still doesn't match, exit
+                # stage left.
+                sys.stderr.write(f'ERROR: unknown command "{arg}", '
+                                 'please run this command for more '
+                                 f'information: {PROGRAM} help')
+                sys.exit(1)
+        fct = fmap[arg]
     sys.argv = sys.argv[1:]
 
     # Handle the special case where the user typed:
-    #   COMMAND help
-    if len(sys.argv) > 1 and sys.argv[1] == 'help':
-        sys.argv[1] = '--help'
+    #   COMMAND (help|version)
+    if len(sys.argv) > 1:
+        if sys.argv[1] == 'help':
+            sys.argv[1] = '--help'
+        elif sys.argv[1] == 'version':
+            sys.argv[1] = '--version'
 
     # Run the command.
-    fmap[arg]()
+    fct()
