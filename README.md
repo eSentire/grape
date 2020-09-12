@@ -20,6 +20,7 @@ Grafana Prototyping Environment
    1. [demo01](#demo01)
    1. [demo02](#demo02)
    1. [demo03](#demo03)
+   1. [demo04](#demo04)
 1. [Miscellaneous](#miscellaneous)
    1. [Grafana](#grafana)
    1. [Postres](#postgres)
@@ -288,9 +289,8 @@ The demo02 dashboard looks like this.
 
 
 #### demo03
-The second demo is more realistic. It shows how to create a model from
-a publicly available dataset. There is more information in the
-demo README.
+This demo shows how to create a dashboard from local data.
+There is more information in the README.
 
 Here is how to run it.
 ```bash
@@ -298,6 +298,18 @@ $ make demo03
 ```
 The demo03 dashboard looks like this.
 !['demo03'](/img/demo03.png)
+
+#### demo04
+This demo shows how to create mock data in a panel which
+allows you to prototype dashboards without touching the
+database. It is a very powerful idiom.
+
+Here is how to run it.
+```bash
+$ make demo04
+```
+The demo04 dashboard looks like this.
+!['demo04'](/img/demo04.png)
 
 
 ### Miscellaneous
