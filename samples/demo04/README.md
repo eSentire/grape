@@ -22,9 +22,9 @@ multiple values.
 Here is an example of a single value for a gauge or stat panel.
 ```sql
 SELECT
-  NOW() AS 'time',
-  'Percent Complete' AS 'metric',
-  93.2 AS value
+  NOW() AS "time",
+  'Percent Complete' AS "metric"',
+  93.2 AS "value"
 ```
 
 Here is an example of multiple values for a time series display that
