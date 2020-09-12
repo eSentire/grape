@@ -49,7 +49,7 @@ SELECT
 FROM
   (VALUES
     (1, 'green', 'all tests passed'),
-    (2, 'yellow', 'some tests failed but all critical tests passed),
+    (2, 'yellow', 'some tests failed but all critical tests passed'),
     (3, 'red', 'at least one critical test failed'))
   AS x(id, color, meaning)
 ```
