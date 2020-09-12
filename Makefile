@@ -70,6 +70,12 @@ demo03:  ## Run samples/demo03.
 	$(call hdr,"$@")
 	cd samples/$@ && ./run.sh
 
+# demo04
+.PHONY: demo04
+demo04:  ## Run samples/demo04.
+	$(call hdr,"$@")
+	cd samples/$@ && ./run.sh
+
 # import
 .PHONY: import
 import:  ## Run the samples/import. It will fail if import.yaml has not been defined.
