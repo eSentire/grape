@@ -72,6 +72,7 @@ To use this you must have:
    1. If you are running on windows you need a run-time like cygwin.
    1. It is only needed for the samples.
 1. python-3.8 or later
+   1. This is because the log module uses the logger stacklevel argument.
 1. pipenv
 1. git (https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 1. make
