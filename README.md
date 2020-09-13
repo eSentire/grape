@@ -92,6 +92,12 @@ $ make
 
 To see all of the available make targets: `make help`.
 
+> On windows you may have to run something like unix2dos
+> to convert the bash shell scripts that are used to run
+> the demos in `samples/*/run.sh`. This will enable commands
+> like `make demo01` to work.
+
+
 ### Help
 Program help is available via the `-h` command:
 
