@@ -269,6 +269,7 @@ in the samples directory tree. Each sample is in its
 own directory with a `README.md` that describes what
 it does and how to use it.
 
+
 #### demo01
 The first demo is very basic. It shows, in detail, how to create a simple
 model with grafana and a database. There is more information in the
@@ -288,6 +289,9 @@ The demo01 dashboard looks like this.
 Although it looks really simple, this demo shows an automatically generated dashboard that connects to the automatically
 generated database and displays its contents.
 
+Click [here](/samples/demo01/README.md) for more information.
+
+
 #### demo02
 The second demo is more realistic. It shows how to create a model from
 a publicly available dataset. There is more information in the
@@ -299,6 +303,8 @@ $ make demo02
 ```
 The demo02 dashboard looks like this.
 !['demo02'](/img/demo02.png)
+
+Click [here](/samples/demo02/README.md) for more information.
 
 
 #### demo03
@@ -312,6 +318,9 @@ $ make demo03
 The demo03 dashboard looks like this.
 !['demo03'](/img/demo03.png)
 
+Click [here](/samples/demo03/README.md) for more information.
+
+
 #### demo04
 This demo shows how to create mock data in a panel which
 allows you to prototype dashboards without touching the
@@ -323,6 +332,8 @@ $ make demo04
 ```
 The demo04 dashboard looks like this.
 !['demo04'](/img/demo04.png)
+
+Click [here](/samples/demo04/README.md) for more information.
 
 
 ### Miscellaneous
