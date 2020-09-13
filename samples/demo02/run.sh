@@ -48,9 +48,10 @@ pipenv run grape create -v -n $NAME -g $PORT
 { set +x; } 2>/dev/null
 
 # Use all_weekly_excess_deaths.csv
+# The pipenv run python etl.py was added to fix a windows issue.
 printf '\x1b[35mINFO:%d: %s\x1b[0m\n' $LINENO 'populate database tables and views'
 set -x
-pipenv run ./etl.py
+pipenv run python etl.py
 docker exec -it ${NAME}pg psql -U postgres -d postgres -c '\d'
 #docker exec -it ${NAME}pg psql -U postgres -d postgres -c '\dS+ all_weekly_excess_deaths'
 #docker exec -it ${NAME}pg psql -U postgres -d postgres -c '\dS+ all_weekly_excess_deaths_view'
