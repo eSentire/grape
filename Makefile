@@ -1,7 +1,7 @@
 # To get help type: make help
+SHELL = bash
 PKG ?= grape
-WHEEL_DEPS    := README.md setup.py $(shell find grape -type f | fgrep -v cache)
-
+WHEEL_DEPS := README.md setup.py $(shell find grape -type f | fgrep -v cache)
 .DEFAULT_GOAL := default
 
 # Store the virtual environment in the project space.
@@ -27,10 +27,10 @@ endef
 default: pkg test  ## Default is to build and test everything.
 
 .PHONY: clean
-clean:
+clean:  ## Clean up. If clean fails, try "sudo make clean".
 	$(call hdr,$@)
-	find . -type f -name '*~' -delete
-	git clean -xdf -e keep .
+	-find . -type f -name '*~' -delete
+	-git clean -xdf -e keep .
 
 # pkg
 .PHONY: pkg

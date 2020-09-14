@@ -65,10 +65,13 @@ See [demo01](https://github.com/jlinoff/grape/tree/master/samples/demo01)
 and [demo02](https://github.com/jlinoff/grape/tree/master/samples/demo02)
 for additional grafana screenshots and database access details using `psql`.
 
+This tool has been tested on Mac OSX 10.15.6, Ubuntu 18.04 and Windows 10.
+
 
 ## Prerequisites
 To use this you must have:
 1. docker (https://docs.docker.com/get-docker/)
+   1. The `docker` group must be available on linux.
 1. bash
    1. If you are running on windows you need a run-time like cygwin.
    1. It is only needed for the samples.
@@ -80,6 +83,8 @@ To use this you must have:
    1. If you are running on windows you need a run-time like cygwin.
 1. unzip
    1. If you are running on windows you need a run-time like cygwin.
+1. sudo
+   1. On linux, the program must be able to rm the database volume mount.
 
 
 ### Setup
@@ -399,3 +404,4 @@ login into the pgAdmin and connect to the database.
 ### Acknowledgments
 
 * Many thanks to Deron Ferguson for helping me track down and debug problems on windows 10.
+* Many thanks to Rob Rodrigues for helping me track down and debug problems on linux.

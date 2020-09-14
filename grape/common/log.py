@@ -139,4 +139,5 @@ def err(msg: str, level: int = 1, xflag=True):
     '''
     LOG.error(msg, stacklevel=level+1, extra=extra())
     if xflag:
+        logging.shutdown()
         sys.exit(1)

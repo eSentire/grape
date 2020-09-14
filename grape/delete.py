@@ -5,13 +5,14 @@ operation.
 import argparse
 import os
 import shutil
+import subprocess
 import sys
 import time
 
 import docker
 
 from grape.common.args import DEFAULT_NAME, CLI, add_common_args, args_get_text
-from grape.common.log import initv, info
+from grape.common.log import initv, info, err, warn
 from grape.common.conf import get_conf
 from grape import __version__
 
@@ -87,6 +88,16 @@ def delete(conf: dict):
             shutil.rmtree(path, ignore_errors=False, onerror=None)
         except FileNotFoundError:
             pass  # this is okay
+        except PermissionError as exc:
+            # Bad news!
+            # Try deleting it as sudo.
+            warn(exc)  # This is not okay!
+            warn('will try to delete as sudo')
+            cmd = f'sudo rm -rf {path}'
+            try:
+                subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
+            except subprocess.CalledProcessError as exc:
+                err(exc)  # failed as exec
     else:
         info(f'directory does not exist: {path}')
 

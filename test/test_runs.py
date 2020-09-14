@@ -103,9 +103,11 @@ def test_run_02_create(capsys: Any):
     sys.argv = [fct, '-v', '-n', NAME, '-g', str(GPORT)]
     create.main()
     out, err = capsys.readouterr()
+    script = f'{NAMEPG}/start.sh'
     print(f'out=<<<{out}>>>')
     print(f'err=<<<{err}>>>')
     assert os.path.exists(NAMEPG)
+    assert os.path.exists(script)  # make sure that the script was created
     assert NAMEGR in err
     assert NAMEPG in err
     client = docker.from_env()
