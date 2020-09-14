@@ -40,9 +40,9 @@ printf '\x1b[35mINFO:%d: %s\x1b[0m\n' $LINENO 'populate the database'
 # This is a bit tricky because we need to put the SQL in a place
 # where the databased in the container can find it.
 set -x
-cp init.sql ${NAME}pg/tmp/$NAME.sql
-docker exec -it ${NAME}pg ls -l /tmp/
-docker exec -it ${NAME}pg psql -d postgres -U postgres -1 -f /tmp/$NAME.sql
+cp init.sql ${NAME}pg/mnt/$NAME.sql
+docker exec -it ${NAME}pg ls -l /mnt/
+docker exec -it ${NAME}pg psql -d postgres -U postgres -1 -f /mnt/$NAME.sql
 { set +x; } 2>/dev/null
 
 printf '\x1b[35mINFO:%d: %s\x1b[0m\n' $LINENO 'grab the configuration'

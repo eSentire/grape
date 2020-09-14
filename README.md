@@ -26,6 +26,7 @@ Grafana Prototyping Environment
    1. [Postres](#postgres)
    1. [pgAdmin](#pgadmin)
    1. [runpga.sh](#runpgash)
+1. [Acknowledgments](#acknowledgments)
 
 </details>
 
@@ -147,8 +148,8 @@ You can also load batch commands like this by taking care to
 make them visible to the tool
 ```bash
 $ edit x.sql
-$ cp x.sql examplepg/tmp  # makes it visible as /tmp/x.sql
-$ docker exec -it examplepg psql -d postgres -U postgres -1 < /tmp/x.sql
+$ cp x.sql examplepg/mnt  # makes it visible as /mnt/x.sql
+$ docker exec -it examplepg psql -d postgres -U postgres -1 < /mnt/x.sql
 ```
 
 ### Save
@@ -156,14 +157,14 @@ The save operation captures the specified model in a zip file.
 It is what you use to capture changes.
 
 ```bash
-$ pipenv run grape save -v -n example -g 4760 -f /tmp/save.zip
+$ pipenv run grape save -v -n example -g 4760 -f /mnt/save.zip
 ```
 
 ### Load
 The load operation updates the model from a saved state (zip file).
 
 ```bash
-$ pipenv run grape load -v -n example -g 4600 -f /tmp/save.zip
+$ pipenv run grape load -v -n example -g 4600 -f /mnt/save.zip
 ```
 
 ### Import
@@ -339,10 +340,12 @@ Click [here](/samples/demo04/README.md) for more information.
 ### Miscellaneous
 This section contains miscellaneous information.
 
+
 #### Grafana
 Grafana was chosen because it is a commonly used open source resource for querying, visualizing,
 alerting on, and exploring metrics you are interested in. Many organizations use it for
 understanding metrics related to business and engineering operations.
+
 
 #### Postgres
 Postgres was chosen for this project because it a popular database that supports relational data,
@@ -373,6 +376,7 @@ For the above example, the database host would be `172.17.0.1:4401`
 or demo01 or `172.17.0.1L4411` for demo02 when referenced from the
 `pgAdmin` docker container created above: `http://localhost:4450`.
 
+
 #### runpga.sh
 There is script called `tools/runpga.sh` that will create a pgAdmin
 container for you.
@@ -385,3 +389,8 @@ $ tools/runpga.sh demo01pg
 
 When it completes it prints out the information necessary to
 login into the pgAdmin and connect to the database.
+
+
+### Acknowledgments
+
+* Many thanks to Deron Ferguson for helping me track down and debug problems on windows 10.

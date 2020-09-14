@@ -177,9 +177,9 @@ def save(conf: dict):
             zfp.writestr('gr.json', json.dumps(grr))
             zfp.writestr('pg.sql', sql)
         # One can unzip the individual files like this:
-        #   $ unzip -p /tmp/example.zip conf.json > /tmp/conf.json
-        #   $ unzip -p /tmp/example.zip gr.json > /tmp/gr.json
-        #   $ unzip -p /tmp/example.zip pg.sql > /tmp/pg.sql
+        #   $ unzip -p /mnt/example.zip conf.json > /mnt/conf.json
+        #   $ unzip -p /mnt/example.zip gr.json > /mnt/gr.json
+        #   $ unzip -p /mnt/example.zip pg.sql > /mnt/pg.sql
     else:
         err('only zip files are supported')
 

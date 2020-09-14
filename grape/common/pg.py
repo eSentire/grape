@@ -12,7 +12,7 @@ def load(conf: dict, sql: str):
     Load the database data.
 
     This is done using psql in the container by copying
-    the sql to the tmp directory that is mounted to the
+    the sql to the mnt directory that is mounted to the
     container.
 
     Args:
@@ -22,10 +22,10 @@ def load(conf: dict, sql: str):
     dbname = conf['pg']['dbname']
     name = conf['pg']['name']
     user = conf['pg']['username']
-    tmp = conf['pg']['tmp']
-    tfn = f'tmp{os.getpid()}.sql'
-    tfpx = f'{tmp}/{tfn}'  # external (host) path
-    tfpi = f'/tmp/{tfn}'  # internal (container) path
+    mnt = conf['pg']['mnt']
+    tfn = f'mnt{os.getpid()}.sql'
+    tfpx = f'{mnt}/{tfn}'  # external (host) path
+    tfpi = f'/mnt/{tfn}'  # internal (container) path
 
     # Fix minor nit. The role always already exists.
     sql = sql.replace('CREATE ROLE postgres;', '-- CREATE ROLE postgres;')
