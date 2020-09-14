@@ -120,6 +120,11 @@ database container to save database results if the container is
 restarted for any reason and, finally, it will connect the database as
 a source in the grafana sercer.
 
+It also creates the database start script in `examplepg/start.sh` with
+the raw docker comand to start the database container with all
+existing data if it stops for any reason. Once started it may take up
+to 30 seconds to initialize.
+
 You can now access the empty dashboard at http://localhost:4600 in your
 browser. The username is `admin` and the password is `admin`.
 
