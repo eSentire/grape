@@ -59,6 +59,56 @@ VERSION:
     return opts
 
 
+def create_start(kconf: dict):
+    '''
+    Create the start script.
+
+    Args:
+        kconf - the configuration for a key
+    '''
+    # Create the start script.
+    name = kconf['name']
+    fname = os.path.join(os.getcwd(), f'{name}/start.sh')
+    if os.path.exists(fname):
+        return
+
+    # Create the docker command.
+    cmd = 'docker run'
+    if kconf['detach']:
+        cmd += ' -d'
+    if kconf['remove']:
+        cmd += ' --rm'
+    if name:
+        cmd += f' --name {name} -h {name}'
+    if kconf['env']:
+        for env in kconf['env']:
+            cmd += f' -e "{env}"'
+    if kconf['ports']:
+        for key1, val1 in kconf['ports'].items():
+            cport = key1
+            hport = val1
+            cmd += f' -p {hport}:{cport}'
+    if kconf['vols']:
+        for key1, val1 in kconf['vols'].items():
+            cmd += f' -v {key1}:' + val1['bind']
+    cmd += ' ' + kconf['image']
+
+    # Create the script.
+    info(f'start script: {fname}')
+    dname = os.path.dirname(fname)
+    if not os.path.exists(dname):
+        os.makedirs(dname)
+    with open(fname, 'w') as ofp:
+        ofp.write(f'''\
+#!/usr/bin/env bash
+# Start the {name} container.
+cd {os.getcwd()}
+{cmd}
+echo "started - it may take up to 30 seconds to initialize"
+''')
+    os.chmod(fname, 0o775)
+
+
 def create_containers(conf: dict, waitval: float):
     '''
     Create the docker containers.
@@ -70,23 +120,24 @@ def create_containers(conf: dict, waitval: float):
     client = docker.from_env()
     wait = 0
     for key in ['gr', 'pg']:
-        cname = conf[key]['cname']
+        kconf = conf[key]
+        cname = kconf['cname']
         containers = client.containers.list(filters={'name': cname})
         if containers:
             info(f'container already exists: "{cname}"')
             continue
-        ports = conf[key]['ports']
+        ports = kconf['ports']
         info(f'creating container "{cname}": {ports}')
-        client.containers.run(image=conf[key]['image'],
-                              hostname=conf[key]['name'],
-                              name=conf[key]['name'],
-                              remove=conf[key]['remove'],
-                              detach=conf[key]['detach'],
+        client.containers.run(image=kconf['image'],
+                              hostname=kconf['name'],
+                              name=kconf['name'],
+                              remove=kconf['remove'],
+                              detach=kconf['detach'],
                               ports=ports,
-                              environment=conf[key]['env'],
-                              volumes=conf[key]['vols'])
+                              environment=kconf['env'],
+                              volumes=kconf['vols'])
         wait = waitval
-
+    create_start(conf['pg'])  # only needed for the database
     if wait:
         # Give the containers time to start up.
         info(f'wait {wait} seconds for the containers to start up')
