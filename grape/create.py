@@ -133,6 +133,7 @@ def create_containers(conf: dict, waitval: float):
         # permissions.
         for key1 in kconf['vols']:
             os.makedirs(key1)
+            os.chmod(key1, 0o775)
 
         ports = kconf['ports']
         info(f'creating container "{cname}": {ports}')
