@@ -22,7 +22,7 @@ def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> dict:
     grname = bname + 'gr'
     pgname = bname + 'pg'
     pgpath_share = os.path.join(os.getcwd(), pgname)
-    pgpath_data = os.path.join(pgpath_share, 'data')
+    #pgpath_data = os.path.join(pgpath_share, 'data')
     pgpath_mnt = os.path.join(pgpath_share, 'mnt')
     conf = {
         'timestamp': datetime.datetime.utcnow().isoformat(timespec='seconds'),
@@ -67,15 +67,16 @@ def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> dict:
             'remove': True,
             'detach': True,
             'env': [
+                'PGDATA=/mnt/pgdata',
                 'POSTGRES_USER=postgres',
                 'POSTGRES_PASSWORD=password'],
             'share': pgpath_share,
             'mnt': pgpath_mnt,
             'vols': {
-                pgpath_data: {
-                    'bind': '/var/lib/postgresql/data',
-                    'mode': 'rw',
-                },
+#                pgpath_data: {
+#                    'bind': '/var/lib/postgresql/data',
+#                    'mode': 'rw',
+#                },
                 pgpath_mnt: {
                     'bind': '/mnt',
                     'mode': 'rw',
