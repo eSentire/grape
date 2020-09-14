@@ -27,10 +27,10 @@ endef
 default: pkg test  ## Default is to build and test everything.
 
 .PHONY: clean
-clean:
+clean:  ## Clean up. If clean fails, try "sudo make clean".
 	$(call hdr,$@)
-	find . -type f -name '*~' -delete
-	git clean -xdf -e keep .
+	-find . -type f -name '*~' -delete
+	-git clean -xdf -e keep .
 
 # pkg
 .PHONY: pkg
