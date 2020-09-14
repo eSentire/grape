@@ -117,6 +117,8 @@ def create_containers(conf: dict, waitval: float):
         conf - the configuration
         wait - the container create wait time
     '''
+    create_start(conf['pg'])  # only needed for the database
+
     client = docker.from_env()
     wait = 0
     for key in ['gr', 'pg']:
@@ -137,7 +139,7 @@ def create_containers(conf: dict, waitval: float):
                               environment=kconf['env'],
                               volumes=kconf['vols'])
         wait = waitval
-    create_start(conf['pg'])  # only needed for the database
+
     if wait:
         # Give the containers time to start up.
         info(f'wait {wait} seconds for the containers to start up')
