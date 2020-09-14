@@ -1,7 +1,7 @@
 # To get help type: make help
+SHELL = bash
 PKG ?= grape
-WHEEL_DEPS    := README.md setup.py $(shell find grape -type f | fgrep -v cache)
-
+WHEEL_DEPS := README.md setup.py $(shell find grape -type f | fgrep -v cache)
 .DEFAULT_GOAL := default
 
 # Store the virtual environment in the project space.
