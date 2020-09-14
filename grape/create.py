@@ -128,6 +128,12 @@ def create_containers(conf: dict, waitval: float):
         if containers:
             info(f'container already exists: "{cname}"')
             continue
+
+        # Create the volume mounted subdirectories with the proper
+        # permissions.
+        for key1 in kconf['vols']:
+            os.makedirs(key1)
+
         ports = kconf['ports']
         info(f'creating container "{cname}": {ports}')
         client.containers.run(image=kconf['image'],
