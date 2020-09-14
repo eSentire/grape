@@ -73,10 +73,6 @@ def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> dict:
             'share': pgpath_share,
             'mnt': pgpath_mnt,
             'vols': {
-#                pgpath_data: {
-#                    'bind': '/var/lib/postgresql/data',
-#                    'mode': 'rw',
-#                },
                 pgpath_mnt: {
                     'bind': '/mnt',
                     'mode': 'rw',
