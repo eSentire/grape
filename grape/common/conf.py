@@ -22,7 +22,6 @@ def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> dict:
     grname = bname + 'gr'
     pgname = bname + 'pg'
     pgpath_share = os.path.join(os.getcwd(), pgname)
-    #pgpath_data = os.path.join(pgpath_share, 'data')
     pgpath_mnt = os.path.join(pgpath_share, 'mnt')
     conf = {
         'timestamp': datetime.datetime.utcnow().isoformat(timespec='seconds'),
