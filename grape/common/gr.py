@@ -74,10 +74,13 @@ def load_datasources(conf: dict, recs: list):
                 rec[key] = val
         url = gurl + '/api/datasources'
         info(f'uploading datasource "{name}" - {url}')
-        response = requests.post(url,
-                                 json=rec,
-                                 auth=auth,
-                                 headers=headers)
+        try:
+            response = requests.post(url,
+                                     json=rec,
+                                     auth=auth,
+                                     headers=headers)
+        except requests.ConnectionError as exc:
+            err(exc)
         info(f'response status: {response.status_code} from {url}')
         if response.status_code not in (200, 409):
             err(f'upload failed with status {response.status_code} to {url}')
@@ -99,10 +102,13 @@ def load_folders(conf: dict, recs: list):
         name = rec['title']
         url = gurl + '/api/folders'
         info(f'uploading folder "{name}" - {url}')
-        response = requests.post(url,
-                                 json=rec,
-                                 auth=auth,
-                                 headers=headers)
+        try:
+            response = requests.post(url,
+                                     json=rec,
+                                     auth=auth,
+                                     headers=headers)
+        except requests.ConnectionError as exc:
+            err(exc)
         info(f'response status: {response.status_code} from {url}')
         if response.status_code not in (200, 412, 500):
             err(f'upload failed with status {response.status_code} to {url}')
@@ -133,9 +139,12 @@ def load_fmap(conf: dict, recs: list) -> dict:
     auth = (conf['gr']['username'], conf['gr']['password'])
     url = conf['gr']['url'] + '/api/folders?limit=100'
     info(f'downloading folders from {url}')
-    response = requests.get(url,
-                            auth=auth,
-                            headers=headers)
+    try:
+        response = requests.get(url,
+                                auth=auth,
+                                headers=headers)
+    except requests.ConnectionError as exc:
+        err(exc)
     if response.status_code != 200:
         err(f'download failed with status {response.status_code} to {url}')
     folders = response.json()  # these are the new folders
@@ -178,10 +187,13 @@ def load_dashboards(conf: dict, recs: list, fmap: dict):
         jrec['dashboard']['id'] = None  # create the dash board
         jrec['dashboard']['uid'] = None
         jrec['folderId'] = fid
-        response = requests.post(url,
-                                 json=jrec,
-                                 auth=auth,
-                                 headers=headers)
+        try:
+            response = requests.post(url,
+                                     json=jrec,
+                                     auth=auth,
+                                     headers=headers)
+        except requests.ConnectionError as exc:
+            err(exc)
         info(f'response status: {response.status_code} from {url}')
         if response.status_code not in (200, 412):
             err(f'upload failed with status {response.status_code} to {url}')
@@ -218,7 +230,10 @@ def read_service(burl: str, auth: tuple, service: str) -> dict:
                'Accept': 'application/json'}
     url = f'{burl}/{service}'
     info(f'reading {url}')
-    response = requests.get(url, auth=auth, headers=headers)
+    try:
+        response = requests.get(url, auth=auth, headers=headers)
+    except requests.ConnectionError as exc:
+        err(exc)
     if response.status_code != 200:
         err(f'request to {url} failed with status {response.status_code}\n'
             f'{json.dumps(response.json(), indent=2)}')
