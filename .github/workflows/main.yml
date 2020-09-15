@@ -36,9 +36,13 @@ jobs:
 
       - name: Mac run
         run: |
-          brew cask install docker
-          open /Applications/Docker.app
-          docker ps
+          brew install docker docker-machine
+          brew services start docker-machine
+          mkdir -p ~/.docker/machine/cache/
+          (cd ~/.docker/machine/cache/; wget -q https://github.com/boot2docker/boot2docker/releases/download/v19.03.12/boot2docker.iso)
+          docker-machine create --driver virtualbox default
+          docker-machine env default
+          eval "$(docker-machine env default)"
           make
         if: startsWith(runner.os, 'macos')
 
