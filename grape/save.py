@@ -99,7 +99,10 @@ def save_gr_read(conf: dict, service: str) -> dict:
                'Accept': 'application/json'}
     url = f'http://{host}:{port}/{service}'
     info(f'reading {url}')
-    response = requests.get(url, auth=auth, headers=headers)
+    try:
+        response = requests.get(url, auth=auth, headers=headers)
+    except requests.ConnectionError as exc:
+        err(exc)
     if response.status_code != 200:
         err(f'request to {url} failed with status {response.status_code}\n'
             f'{json.dumps(response.json(), indent=2)}')
