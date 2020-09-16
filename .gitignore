@@ -6,6 +6,9 @@ keep/
 build/
 dist/
 grape.egg-info/
+test/assets/
+test/htmlcov/
+test/report.html
 test/grape_test.zip
 test/grape_testpg/
 .coverage

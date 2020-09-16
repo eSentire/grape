@@ -44,7 +44,7 @@ wheel: .wheel-install  ## Build the grape package wheel (same as pkg).
 .PHONY: test
 test: init  ## Run the unit tests.
 	$(call hdr,$@)
-	cd test && pipenv run pytest -v --cov=grape .
+	cd test && pipenv run pytest -v --cov=grape --cov-report=html --html=report.html .
 
 # pylint
 .PHONY: pylint
