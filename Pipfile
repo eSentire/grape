@@ -3,16 +3,19 @@ name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
 
+# The separation of dev and production
+# packages is not strictly needed in this
+# case but it is good hygiene.
 [dev-packages]
-
-[packages]
-docker = "*"
 mypy = "*"
-psycopg2-binary = "*"
 pylint = "*"
 pytest = "*"
 pytest-cov = "*"
 pytest-html = "*"
+
+[packages]
+docker = "*"
+psycopg2-binary = "*"
 PyYAML = "*"
 requests = "*"
 
