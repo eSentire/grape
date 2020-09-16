@@ -1,6 +1,6 @@
 # grape
 [![Releases](https://img.shields.io/github/release/eSentire/grape.svg?style=flat)](https://github.com/eSentire/grape/releases)
-![Build](https://github.com/esentire/grape/workflows/CI/badge.svg)
+![Build](https://github.com/esentire/grape/workflows/CI/badge.svg?branch=master)
 
 Grafana Prototyping Environment
 
