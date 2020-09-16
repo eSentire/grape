@@ -43,7 +43,9 @@ jobs:
           docker-machine create --driver virtualbox default
           docker-machine env default
           eval "$(docker-machine env default)"
-          make
+          make wheel-install
+          pipenv run grape create
+          docker ps
         if: startsWith(runner.os, 'macos')
 
       - name: Ubuntu run
