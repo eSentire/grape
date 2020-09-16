@@ -110,11 +110,11 @@ Show program's version number and exit.
     parser.add_argument('-w', '--wait',
                         action='store',
                         type=float,
-                        default=30,
+                        default=60,
                         metavar=('SECONDS'),
                         help='''\
-The number of seconds to wait after the
-containers have been created. It is used
+The maximum number of seconds to wait after
+the containers have been created. It is used
 by the create and load commands.
 
 Default: %(default)s.
