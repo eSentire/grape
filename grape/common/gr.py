@@ -180,7 +180,8 @@ def load_dashboards(conf: dict, recs: list, fmap: dict):
     gurl = conf['gr']['url']
     for rec in recs:
         name = rec['dashboard']['title']
-        fid = fmap[rec['folderId']]
+        fmapid = rec['folderId']
+        fid = fmap[fmapid] if fmapid in fmap else 0
         url = gurl + '/api/dashboards/db'
         info(f'uploading dashboard ({fid}) "{name}" - {url}')
         jrec = rec
