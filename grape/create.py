@@ -13,7 +13,7 @@ import time
 import docker
 
 from grape.common.args import DEFAULT_NAME, CLI, add_common_args, args_get_text
-from grape.common.log import initv, info
+from grape.common.log import initv, info, warn
 from grape.common.conf import get_conf
 from grape.common.gr import load_datasources
 from grape import __version__
@@ -109,6 +109,46 @@ echo "started - it may take up to 30 seconds to initialize"
     os.chmod(fname, 0o775)
 
 
+def create_container_init(conf: dict, waitval: float):
+    '''
+    Wait for the containers to initialized by looking
+    for messages in the logs.
+
+    This search allows initialization to complete
+    faster than just doing a simple wait.
+
+    Args:
+        conf - the configuration
+        wait - the container create wait time
+    '''
+    client = docker.from_env()
+    recs = [
+        {'key': 'gr', 'value': b'created default admin'},
+        {'key': 'pg', 'value': b'database system is ready to accept connections'},
+    ]
+    for rec in recs:
+        key = rec['key']
+        val = rec['value']
+        name = conf[key]['name']
+        info(f'checking container initialization status of "{name}" with max wait: {waitval}')
+        cobj = client.containers.get(name)
+        i = 0
+        while True:
+            logs = cobj.logs(tail=20)
+            if val in logs.lower():
+                info(f'container initialized: "{name}"')
+                break
+            if i < waitval:
+                i += 1
+                if (i % 5) == 0:
+                    info(f'   container not initialized yet, will try again: {name}')
+                time.sleep(1)
+            else:
+                # Worst case is that we simply wait the maximum time.
+                warn(f'   container failed to initialize: "{name}"')
+                break
+
+
 def create_containers(conf: dict, waitval: float):
     '''
     Create the docker containers.
@@ -118,7 +158,6 @@ def create_containers(conf: dict, waitval: float):
         wait - the container create wait time
     '''
     create_start(conf['pg'])  # only needed for the database
-
     client = docker.from_env()
     wait = 0
     for key in ['gr', 'pg']:
@@ -148,9 +187,7 @@ def create_containers(conf: dict, waitval: float):
         wait = waitval
 
     if wait:
-        # Give the containers time to start up.
-        info(f'wait {wait} seconds for the containers to start up')
-        time.sleep(wait)
+        create_container_init(conf, wait)
 
 
 def create(conf: dict, wait: float):
