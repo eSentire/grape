@@ -125,4 +125,4 @@ wheel-build: init  ## Build the wheel.
 .PHONY: init
 init:  ## Initialize the environment.
 	$(call hdr,$@)
-	pipenv install
+	pipenv install --dev
