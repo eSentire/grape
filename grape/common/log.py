@@ -29,6 +29,9 @@ COLOR = True
 # Note the use of custom format variables: prefix and suffix.
 FMT = '%(prefix)s%(levelname)s %(asctime)s %(filename)s:%(lineno)s - %(message)s%(suffix)s'
 
+# Cached level.
+LEVEL = logging.WARNING
+
 
 def initv(verbose: int):
     '''
@@ -65,9 +68,11 @@ def init(level: int):
     Args:
         level - The log level: logging.INFO, etc.
     '''
-    global LOG  # pylint: disable=global-statement
+    global LOG, LEVEL  # pylint: disable=global-statement
     if not LOG is None:
-        return
+        for hnd in LOG.handlers:
+            LOG.removeHandler(hnd)
+    LEVEL = level  # cache
     formatter = logging.Formatter(FMT)
 
     stream = logging.StreamHandler()
@@ -102,7 +107,11 @@ def info(msg: str, level: int = 1):
         msg - the message
         level - the stack level (default: parent)
     '''
-    LOG.info(msg, stacklevel=level+1, extra=extra())
+    try:
+        LOG.info(msg, stacklevel=level+1, extra=extra())
+    except ValueError:  # recover from pylint IO issue
+        init(LEVEL)
+        LOG.info(msg, stacklevel=level+1, extra=extra())
 
 
 def warn(msg: str, level: int = 1):
@@ -113,7 +122,11 @@ def warn(msg: str, level: int = 1):
         msg - the message
         level - the stack level (default: parent)
     '''
-    LOG.warning(msg, stacklevel=level+1, extra=extra())
+    try:
+        LOG.warning(msg, stacklevel=level+1, extra=extra())
+    except ValueError:  # recover from pylint IO issue
+        init(LEVEL)
+        LOG.warning(msg, stacklevel=level+1, extra=extra())
 
 
 def debug(msg: str, level: int = 1):
@@ -125,7 +138,11 @@ def debug(msg: str, level: int = 1):
         msg - the message
         level - the stack level (default: parent)
     '''
-    LOG.debug(msg, stacklevel=level+1, extra=extra())
+    try:
+        LOG.debug(msg, stacklevel=level+1, extra=extra())
+    except ValueError:  # recover from pylint IO issue
+        init(LEVEL)
+        LOG.debug(msg, stacklevel=level+1, extra=extra())
 
 
 def err(msg: str, level: int = 1, xflag=True):
@@ -137,7 +154,11 @@ def err(msg: str, level: int = 1, xflag=True):
         level - the stack level (default: parent)
         xflag - if true, exit
     '''
-    LOG.error(msg, stacklevel=level+1, extra=extra())
+    try:
+        LOG.error(msg, stacklevel=level+1, extra=extra())
+    except ValueError:  # recover from pylint IO issue
+        init(LEVEL)
+        LOG.error(msg, stacklevel=level+1, extra=extra())
     if xflag:
         logging.shutdown()
         sys.exit(1)
