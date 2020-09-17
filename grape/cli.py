@@ -97,7 +97,7 @@ def version():
 
 def main():
     'main'
-    if not sys.argv[1:]:
+    if len(sys.argv) < 2:
         # No arguments brings up the help.
         help0()
 
@@ -148,9 +148,16 @@ def main():
     #   COMMAND (help|version)
     if len(sys.argv) > 1:
         if sys.argv[1] == 'help':
+            # user typed: COMMAND help
             sys.argv[1] = '--help'
         elif sys.argv[1] == 'version':
+            # user typed: COMMAND version
             sys.argv[1] = '--version'
+        elif sys.argv[0] == 'help':
+            if not sys.argv[1].startswith('-'):
+                # user typed: help COMMAND
+                sys.argv[0] = sys.argv[1]
+                sys.argv[1] = '--help'
 
     # Run the command.
     fct()
