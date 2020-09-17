@@ -405,4 +405,4 @@ login into the pgAdmin and connect to the database.
 ### Acknowledgments
 
 * Many thanks to Deron Ferguson for helping me track down and debug problems on windows 10.
-* Many thanks to Rob Rodrigues for helping me track down and debug problems on linux.
+* Many thanks to Rob Rodrigues for helping me track down and debug problems on linux as well his work to add the integration work flow.
