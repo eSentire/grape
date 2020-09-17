@@ -36,6 +36,17 @@ def test_run_00_cli(capsys: Any):
     sargs = sys.argv
     fct = inspect.stack()[0].function
 
+    # Test no args.
+    sys.argv = [fct]
+    with pytest.raises(SystemExit) as exc:
+        cli.main()
+    out, err = capsys.readouterr()
+    print(f'cmd=<<<{sys.argv}>>>')
+    print(f'out=<<<{out}>>>')
+    print(f'err=<<<{err}>>>')
+    assert exc.type == SystemExit
+    assert exc.value.code == 0
+
     # test cli help and version.
     for cmd in ['help', '--help', '-h', 'version', '--version', '-V']:
         sys.argv = [fct, cmd]
@@ -49,8 +60,8 @@ def test_run_00_cli(capsys: Any):
         assert exc.value.code == 0
 
     # now test cli operations help
-    for cmd in ['create', 'delete', 'load', 'save', 'import', 'export']:
-        for opt in ['-h', '--help', '-V', '--version']:
+    for cmd in ['create', 'cr', 'delete', 'del', 'load', 'save', 'import', 'export']:
+        for opt in ['-h', '--help', '-V', '--version', 'help', 'version']:
             sys.argv = [fct, cmd, opt]
             with pytest.raises(SystemExit) as exc:
                 cli.main()
@@ -60,6 +71,30 @@ def test_run_00_cli(capsys: Any):
             print(f'err=<<<{err}>>>')
             assert exc.type == SystemExit
             assert exc.value.code == 0
+
+    # Test: help COMMAND
+    for cmd in ['create', 'cr', 'delete', 'del', 'load', 'save', 'import', 'export']:
+        sys.argv = [fct, 'help', cmd]
+        with pytest.raises(SystemExit) as exc:
+            cli.main()
+        out, err = capsys.readouterr()
+        print(f'cmd=<<<{sys.argv}>>>')
+        print(f'out=<<<{out}>>>')
+        print(f'err=<<<{err}>>>')
+        assert exc.type == SystemExit
+        assert exc.value.code == 0
+
+    # Test bad argument handling.
+    sys.argv = [fct, 'frobniz']
+    with pytest.raises(SystemExit) as exc:
+        cli.main()
+    out, err = capsys.readouterr()
+    print(f'cmd=<<<{sys.argv}>>>')
+    print(f'out=<<<{out}>>>')
+    print(f'err=<<<{err}>>>')
+    assert exc.type == SystemExit
+    assert exc.value.code != 0
+
     sys.argv = sargs
 
 
@@ -221,7 +256,7 @@ def test_run_06_export(capsys: Any):
     with open(xcfn, 'w') as ofp:
         ofp.write(f'''\
 # Grafana login.
-url: http://localhost:{GPORT2}
+url: http://localhost:{GPORT2}/
 username: 'admin'
 password: 'admin'
 
