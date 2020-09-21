@@ -7,7 +7,7 @@ This allows the user to only deal with a single interface.
 import os
 import sys
 from grape import __version__
-from grape import create, delete, save, load, ximport, xexport
+from grape import create, delete, save, load, ximport, xexport, status
 
 
 PROGRAM = os.path.splitext(os.path.basename(sys.argv[0]))[0]
@@ -81,6 +81,11 @@ Commands:
                 save operation (-f) and a YAML file that
                 describes the external source (-x).
 
+    status      Report the status of grape related
+                related containers by look for specific
+                labels that were added when the containers
+                were started.
+
 Version:
     {PROGRAM}-{__version__}
 ''')
@@ -120,6 +125,7 @@ def main():
         'load': load.main,
         'import': ximport.main,
         'export': xexport.main,
+        'status': status.main,
     }
     if sys.argv[1] == '-V':
         # Special case handling because case matters.

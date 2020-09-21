@@ -16,6 +16,7 @@ from grape import save
 from grape import load
 from grape import ximport
 from grape import xexport
+from grape import status
 
 
 GPORT = 4700
@@ -278,7 +279,24 @@ databases:
     sys.argv = sargs
 
 
-def test_run_07_delete(capsys: Any):
+def test_run_07_status(capsys: Any):
+    'test status'
+    sargs = sys.argv
+    fct = inspect.stack()[0].function
+    sys.argv = [fct, '-v']
+    status.main()
+    out, err = capsys.readouterr()
+    print(f'out=<<<{out}>>>')
+    print(f'err=<<<{err}>>>')
+
+    client = docker.from_env()
+    containers = client.containers.list(filters={'label': 'grape.type'})
+    assert len(containers) >= 2
+
+    sys.argv = sargs
+
+
+def test_run_08_delete(capsys: Any):
     'end with delete'
     sargs = sys.argv
     fct = inspect.stack()[0].function

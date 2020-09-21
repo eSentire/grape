@@ -171,8 +171,11 @@ def create_containers(conf: dict, waitval: float):
         # Create the volume mounted subdirectories with the proper
         # permissions.
         for key1 in kconf['vols']:
-            os.makedirs(key1)
-            os.chmod(key1, 0o775)
+            try:
+                os.makedirs(key1)
+                os.chmod(key1, 0o775)
+            except FileExistsError as exc:
+                warn(exc)
 
         ports = kconf['ports']
         info(f'creating container "{cname}": {ports}')
@@ -181,6 +184,7 @@ def create_containers(conf: dict, waitval: float):
                               name=kconf['name'],
                               remove=kconf['remove'],
                               detach=kconf['detach'],
+                              labels=kconf['labels'],
                               ports=ports,
                               environment=kconf['env'],
                               volumes=kconf['vols'])
