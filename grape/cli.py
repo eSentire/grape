@@ -81,7 +81,7 @@ Commands:
                 save operation (-f) and a YAML file that
                 describes the external source (-x).
 
-    status      Report the status of grafmdev related
+    status      Report the status of grape related
                 related containers by look for specific
                 labels that were added when the containers
                 were started.
