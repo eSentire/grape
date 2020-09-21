@@ -17,6 +17,7 @@ Grafana Prototyping Environment
 1. [Load](#load)
 1. [Import](#import)
 1. [Export](#export)
+1. [Status](#status)
 1. [Samples](#samples)
    1. [demo01](#demo01)
    1. [demo02](#demo02)
@@ -69,7 +70,7 @@ for additional grafana screenshots and database access details using `psql`.
 This tool has been tested on Mac OSX 10.15.6, Ubuntu 18.04 and Windows 10.
 
 
-## Prerequisites
+### Prerequisites
 To use this you must have:
 1. docker (https://docs.docker.com/get-docker/)
    1. The `docker` group must be available on linux.
@@ -163,6 +164,7 @@ $ cp x.sql examplepg/mnt  # makes it visible as /mnt/x.sql
 $ docker exec -it examplepg psql -d postgres -U postgres -1 < /mnt/x.sql
 ```
 
+
 ### Save
 The save operation captures the specified model in a zip file.
 It is what you use to capture changes.
@@ -171,12 +173,14 @@ It is what you use to capture changes.
 $ pipenv run grape save -v -n example -g 4760 -f /mnt/save.zip
 ```
 
+
 ### Load
 The load operation updates the model from a saved state (zip file).
 
 ```bash
 $ pipenv run grape load -v -n example -g 4600 -f /mnt/save.zip
 ```
+
 
 ### Import
 The import operation captures an external grafana environment for the
@@ -190,6 +194,7 @@ the associated conf file. It does not import databases.
 The import operation creates a zip file that can be used by a load
 operation. It requires a conf file that is specified by the -x option.
 
+
 #### Operations
 Here is the sequence of operations that define an import
 flow:
@@ -197,6 +202,7 @@ flow:
 1. create the external conf file
 1. import the external grafana
 1. load it into the local model
+
 
 #### Commands
 Below are the actual commands for downloading an external
@@ -212,6 +218,7 @@ $ time pipenv run grape load -v -f foo.zip -n foo -g 4800
 
 Once the above steps are complete, you will be able to
 access the local version at http://localhost:4800.
+
 
 #### External Conf YAML
 This is what a sample external conf file looks like:
@@ -238,12 +245,14 @@ databases:
 The export operation is the inverse of the import operation.
 You use it to update an external grafana server.
 
+
 #### Operations
 The sequence of operations to perform an export operation are:
 
 1. create the external conf file
 1. save the local grafana service to a zip file
 1. export to the external service.
+
 
 #### Commands
 Here are the commands:
@@ -253,6 +262,7 @@ $ edit export.yaml
 $ time pipenv run grape save -v -n foo -g 4800 -f foo.zip
 $ time pipenv run grape export -v -x export.yaml -f foo.zip
 ```
+
 
 #### External Conf YAML
 This is what a sample external conf file looks like:
@@ -274,6 +284,22 @@ databases:
   - name: 'InfluxDB'
     password: 'topsecret!'
 ```
+
+
+### Status
+Generate a status report of all docker containers associated with
+grape.
+```bash
+$ grape status -v
+INFO 2020-09-21 13:27:37,755 status.py:122 - status
+  Name      Type  Version  Status   Started                       Elapsed   Id          Image              Created
+  importgr  gr    0.4.0    running  2020-09-21T19:11:38.9520246Z  01:15:58  97dc4b113b  sha256:9ad3ce931a  2020-09-21T19:11:38.6148423Z
+  importpg  pg    0.4.0    running  2020-09-21T19:11:39.4823737Z  01:15:58  2c61e6db0f  sha256:0b0b68fee3  2020-09-21T19:11:38.9811611Z
+  proto1gr  gr    0.4.0    running  2020-09-21T19:10:52.0664005Z  01:16:45  3e3af49442  sha256:9ad3ce931a  2020-09-21T19:10:51.7615459Z
+  proto1pg  pg    0.4.0    running  2020-09-21T19:10:52.462019Z   01:16:45  7e72e9d0db  sha256:0b0b68fee3  2020-09-21T19:10:52.0829656Z
+INFO 2020-09-21 13:27:37,826 status.py:170 - done
+```
+
 
 ### Samples
 There are different samples of how to use this system
