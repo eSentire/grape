@@ -92,7 +92,7 @@ To use this you must have:
 ### Setup
 Do these steps to get started:
 ```bash
-$ git clone git@git.eng.esentire.com:jlinoff/grape.git
+$ git clone https://github.com/eSentire/grape.git
 $ cd grape
 $ make
 ```
