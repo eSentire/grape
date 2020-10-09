@@ -309,6 +309,8 @@ it does and how to use it.
 
 
 #### demo01
+[demo01](/samples/demo01)
+
 The first demo is very basic. It shows, in detail, how to create a simple
 model with grafana and a database. There is more information in the
 demo README.
@@ -331,6 +333,8 @@ Click [here](/samples/demo01/README.md) for more information.
 
 
 #### demo02
+[demo02](/samples/demo02)
+
 The second demo is more realistic. It shows how to create a model from
 a publicly available dataset. There is more information in the
 demo README.
@@ -346,6 +350,8 @@ Click [here](/samples/demo02/README.md) for more information.
 
 
 #### demo03
+[demo03](/samples/demo03)
+
 This demo shows how to create a dashboard from local data.
 There is more information in the README.
 
@@ -360,6 +366,8 @@ Click [here](/samples/demo03/README.md) for more information.
 
 
 #### demo04
+[demo04](/samples/demo04)
+
 This demo shows how to create mock data in a panel which
 allows you to prototype dashboards without touching the
 database. It is a very powerful idiom.
