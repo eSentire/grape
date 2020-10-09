@@ -63,8 +63,8 @@ visualization ideas.
 Here is a screenshot from `demo02`:
 !['demo02'](/img/demo02.png)
 
-See [demo01](https://github.com/jlinoff/grape/tree/master/samples/demo01)
-and [demo02](https://github.com/jlinoff/grape/tree/master/samples/demo02)
+See [demo01](/samples/demo01)
+and [demo02](/samples/demo02)
 for additional grafana screenshots and database access details using `psql`.
 
 This tool has been tested on Mac OSX 10.15.6, Ubuntu 18.04 and Windows 10.
