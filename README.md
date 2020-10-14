@@ -115,6 +115,7 @@ $ pipenv run grape help
 
 To get help about the available make commands type: `make help`.
 
+
 ### Create
 To create the infrastructure:
 ```bash
@@ -125,7 +126,7 @@ This will create two docker containers: `examplegr` and
 `examplepg`. It will also map the local `examplepg` directory to the
 database container to save database results if the container is
 restarted for any reason and, finally, it will connect the database as
-a source in the grafana sercer.
+a source in the grafana server.
 
 It also creates the database start script in `examplepg/start.sh` with
 the raw docker comand to start the database container with all
