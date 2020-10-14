@@ -131,9 +131,14 @@ def save_gr_all(conf: dict) -> dict:
     fids = reduce(lambda x, y: x+[y] if not y in x else x,
                   [fid['id'] for fid in folders],
                   [])
-    if not fids:
-        # The General folder always exists.
-        fids = [0]
+    if 0 not in fids:
+        # The general folder always exists even if it is not visible.
+        # This logic catches the special case where there are some
+        # dashboards in general and some dashboards in other folders
+        # and the general folder is not explicitly present.
+        # It was added after observing a case where dashboards
+        # under General were ignored in some case.
+        fids.append(0)
 
     # Read the dashboards.
     dashboards = []

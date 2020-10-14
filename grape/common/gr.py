@@ -196,7 +196,7 @@ def load_dashboards(conf: dict, recs: list, fmap: dict):
         except requests.ConnectionError as exc:
             err(exc)
         info(f'response status: {response.status_code} from {url}')
-        if response.status_code not in (200, 412):
+        if response.status_code not in (200, 400, 412):
             err(f'upload failed with status {response.status_code} to {url}')
 
 
