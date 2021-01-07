@@ -19,7 +19,6 @@ psycopg2-binary = "*"
 PyYAML = "*"
 requests = "*"
 python-dateutil = "*"
-decorator = "*"
 
 [requires]
 python_version = "3.8"

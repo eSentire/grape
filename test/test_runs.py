@@ -8,7 +8,6 @@ from typing import Any, Callable, Tuple
 from zipfile import ZipFile
 import pytest
 import docker
-from decorator import decorator
 
 from grape import cli
 from grape import delete
@@ -27,25 +26,6 @@ GPORT2 = 4710
 NAME2 = 'grape_test2'
 
 
-@decorator
-def insulate_globals(fct: Callable, *args: Any, **kwargs: Any) -> Callable:
-    '''Simple decorator to insulate sys.argv.
-
-    Args:
-        fct: The function to wrap.
-        args: The unnamed args.
-        kwargs: The named args.
-
-    Returns:
-        wrapper: The decorated function wrapper.
-    '''
-    def wrapper(*args, **kwargs):
-        save = sys.argv  # save the sys level args
-        fct(*args, **kwargs)
-        sys.argv = save  # restore the sys level args
-    return wrapper
-
-
 def make_names(name: str) -> Tuple[str, str, str]:
     '''Simple function that generates useful names.
 
@@ -62,7 +42,6 @@ def make_names(name: str) -> Tuple[str, str, str]:
     return name + 'gr', name + 'pg', name + '.zip'
 
 
-@insulate_globals
 def test_run_01_cli(capsys: Any):
     'test the wrapper interface'
     fct = inspect.stack()[0].function  # fct name
@@ -127,7 +106,6 @@ def test_run_01_cli(capsys: Any):
     assert exc.value.code != 0
 
 
-@insulate_globals
 @pytest.mark.parametrize(
     'name,gport',
     [
@@ -164,7 +142,6 @@ def test_run_02_delete(capsys: Any, name: str, gport: int):
     assert not os.path.exists(namezp)
 
 
-@insulate_globals
 @pytest.mark.parametrize(
     'name,gport',
     [
@@ -200,7 +177,6 @@ def test_run_03_create(capsys: Any, name: str, gport: int):
     assert len(cpg) == 1
 
 
-@insulate_globals
 @pytest.mark.parametrize(
     'name,gport',
     [
@@ -237,7 +213,6 @@ def test_run_04_save(capsys: Any, name: str, gport: int):
     assert 'pg.sql' in names
 
 
-@insulate_globals
 @pytest.mark.parametrize(
     'name,gport',
     [
@@ -266,7 +241,6 @@ def test_run_05_load(capsys: Any, name: str, gport: int):
     assert namepg in err
 
 
-@insulate_globals
 @pytest.mark.parametrize(
     'name,gport',
     [
@@ -313,7 +287,6 @@ databases:
     os.unlink(xcfn)
 
 
-@insulate_globals
 @pytest.mark.parametrize(
     'name,gport,name2,gport2',
     [
@@ -331,6 +304,7 @@ def test_run_07_export(capsys: Any, name: str, gport: int, name2: str, gport2: i
         gport2: The export grafana port.
     '''
     namegr, namepg, namezp = make_names(name)
+    namegr2, namepg2, _namezp2 = make_names(name2)
     fct = inspect.stack()[0].function
 
     # Prerequisites.
@@ -342,7 +316,7 @@ def test_run_07_export(capsys: Any, name: str, gport: int, name2: str, gport2: i
     out, err = capsys.readouterr()
     print(f'out=<<<{out}>>>')
     print(f'err=<<<{err}>>>')
-    assert os.path.exists(NAMEPG2)
+    assert os.path.exists(namepg2)
     assert namegr2 in err
     assert namepg2 in err
     client = docker.from_env()
@@ -380,7 +354,6 @@ databases:
     os.unlink(xcfn)
 
 
-@insulate_globals
 @pytest.mark.parametrize(
     'name,name2',
     [
@@ -413,7 +386,6 @@ def test_run_08_status(capsys: Any, name: str, name2: str):
     assert len(containers) >= 2
 
 
-@insulate_globals
 @pytest.mark.parametrize(
     'name,gport',
     [
