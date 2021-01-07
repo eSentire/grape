@@ -153,7 +153,8 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
             try:
                 logs = cobj.logs(tail=20)
                 if val in logs.lower():
-                    info(f'container initialized: "{name}"')
+                    elapsed = time.time() - start
+                    info(f'container initialized: "{name}" after {elapsed:0.1f} seconds')
                     break
             except docker.errors.NotFound as exc:
                 err(f'container failed to initialize: "{name}" - {exc}')
