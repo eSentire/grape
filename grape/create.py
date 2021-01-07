@@ -13,7 +13,7 @@ import time
 import docker
 
 from grape.common.args import DEFAULT_NAME, CLI, add_common_args, args_get_text
-from grape.common.log import initv, info, warn
+from grape.common.log import initv, info, warn, err
 from grape.common.conf import get_conf
 from grape.common.gr import load_datasources
 from grape import __version__
@@ -118,34 +118,70 @@ def create_container_init(conf: dict, waitval: float):
     faster than just doing a simple wait.
 
     Args:
-        conf - the configuration
-        wait - the container create wait time
+        conf: The configuration.
+        waitval: The container create wait time in seconds.
     '''
     client = docker.from_env()
     recs = [
         {'key': 'gr', 'value': b'created default admin'},
         {'key': 'pg', 'value': b'database system is ready to accept connections'},
     ]
+    def wait_timedout(start: float,  # pylint: disable=too-many-arguments
+                      i: int, ival: int,
+                      name: str,
+                      sleep: float, opname: str):
+        '''Check to see if the wait time limit was exceeded.
+        '''
+        elapsed = time.time() - start
+        if elapsed <= waitval:
+            if (i % ival) == 0:  # approximately once per second
+                info('   container not initialized yet, will try again '
+                     f'({opname}): {name} ({elapsed:0.1f})')
+            time.sleep(sleep)
+            return False
+
+        # Worst case is that we simply wait the maximum time.
+        warn(f'   container failed to initialize ({opname}): "{name}"')
+        return True
+
     for rec in recs:
         key = rec['key']
         val = rec['value']
         name = conf[key]['name']
         info(f'checking container initialization status of "{name}" with max wait: {waitval}')
-        cobj = client.containers.get(name)
+        start = time.time()
+        wval = 0.1  # wait time value in seconds
+        ival = 10  # report about once per second
+
+        # Load the containers.
+        # Note that the the containers.get() and the logs() operations
+        # are glommed together under the same timeout because the user
+        # only cares about the total time.
         i = 0
         while True:
-            logs = cobj.logs(tail=20)
-            if val in logs.lower():
-                info(f'container initialized: "{name}"')
+            try:
+                cobj = client.containers.get(name)
                 break
-            if i < waitval:
-                i += 1
-                if (i % 5) == 0:
-                    info(f'   container not initialized yet, will try again: {name}')
-                time.sleep(1)
-            else:
-                # Worst case is that we simply wait the maximum time.
-                warn(f'   container failed to initialize: "{name}"')
+            except docker.errors.NotFound:
+                time.sleep(wval)
+            i += 1
+            if wait_timedout(start, i, ival, name, wval, 'get'):
+                break
+
+        # Read the container logs.
+        logs = ''
+        i = 0
+        while True:
+            try:
+                logs = cobj.logs(tail=20)
+                if val in logs.lower():
+                    info(f'container initialized: "{name}"')
+                    break
+            except docker.errors.NotFound:
+                time.sleep(wval)
+            i += 1
+            if wait_timedout(start, i, ival, name, wval, 'logs'):
+                err(f'cannot continue:\nLOG: ({len(logs)}):\n{logs.decode("utf-8")}')
                 break
 
 
@@ -154,8 +190,8 @@ def create_containers(conf: dict, waitval: float):
     Create the docker containers.
 
     Args:
-        conf - the configuration
-        wait - the container create wait time
+        conf: The configuration.
+        wait: The container create wait time.
     '''
     create_start(conf['pg'])  # only needed for the database
     client = docker.from_env()
@@ -199,8 +235,8 @@ def create(conf: dict, wait: float):
     Create the docker infrastructure.
 
     Args:
-        conf - the configuration
-        wait - the container create wait time
+        conf: The configuration.
+        wait: The container create wait time.
     '''
     create_containers(conf, wait)
     datasources = [conf['gr']['datasource']]
