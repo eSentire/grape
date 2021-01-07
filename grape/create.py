@@ -62,7 +62,7 @@ def create_start(kconf: dict):
     '''Create the start script.
 
     Args:
-        kconf: The configuration for a key.
+        kconf: The configuration data for a key.
     '''
     # Create the start script.
     name = kconf['name']
@@ -108,7 +108,8 @@ echo "started - it may take up to 30 seconds to initialize"
 
 
 def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-many-locals
-    '''
+    '''Initialize the containers.
+
     Wait for the containers to initialized by looking
     for messages in the logs.
 
@@ -116,7 +117,7 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
     faster than just doing a simple wait.
 
     Args:
-        conf: The configuration.
+        conf: The configuration data.
         waitval: The container create wait time in seconds.
     '''
     time.sleep(1)  # arbitrary short wait
@@ -172,11 +173,10 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
 
 
 def create_containers(conf: dict, waitval: float):
-    '''
-    Create the docker containers.
+    '''Create the docker containers.
 
     Args:
-        conf: The configuration.
+        conf: The configuration data.
         wait: The container create wait time.
     '''
     create_start(conf['pg'])  # only needed for the database
@@ -217,11 +217,10 @@ def create_containers(conf: dict, waitval: float):
 
 
 def create(conf: dict, wait: float):
-    '''
-    Create the docker infrastructure.
+    '''Create the docker infrastructure.
 
     Args:
-        conf: The configuration.
+        conf: The configuration data.
         wait: The container create wait time.
     '''
     create_containers(conf, wait)
@@ -230,7 +229,10 @@ def create(conf: dict, wait: float):
 
 
 def main():
-    'main'
+    '''Create command main.
+
+    This is the command line entry point for the create command.
+    '''
     opts = getopts()
     initv(opts.verbose)
     info(f'creating {opts.base} based containers')

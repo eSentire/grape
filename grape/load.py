@@ -18,11 +18,10 @@ from grape import __version__
 
 
 def getopts() -> argparse.Namespace:
-    '''
-    Process the command line options.
+    '''Process the command line options.
 
     Returns:
-       The argument namespace.
+       opts: The argument namespace.
     '''
     argparse._ = args_get_text  # to capitalize help headers
     base = os.path.basename(sys.argv[0])
@@ -71,7 +70,8 @@ VERSION:
 
 
 def load(conf: dict, wait: float):
-    '''
+    '''Load the servers.
+
     Load the current grafana and postgres servers from
     an archive.
 
@@ -81,8 +81,8 @@ def load(conf: dict, wait: float):
     components of each service which is a challenge.
 
     Args:
-        conf - the configuration
-        wait - the container create wait time
+        conf: The configuration data.
+        wait: The container create wait time.
     '''
     result = zp_load(conf)
     zconf = result['conf']
@@ -101,7 +101,10 @@ def load(conf: dict, wait: float):
 
 
 def main():
-    'main'
+    '''Load command main.
+
+    This is the command line entry point for the load command.
+    '''
     opts = getopts()
     initv(opts.verbose)
     info(f'load {opts.fname} into {opts.base}')

@@ -10,14 +10,19 @@ from grape import __version__
 
 
 def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> dict:
-    '''
-    Get the configuration used by all tools.
+    '''Get the grape project configuration data used by all tools.
+
+    This is used by each of the commands and is customized by
+    command line argument settings.
 
     Args:
-        bname - the base name (from -n)
-        fname - the file name (from -f)
-        grxport - the external grafana port (from -g)
-        pgxport - the external database port (from -p)
+        bname: The base name (from -n).
+        fname: The file name (from -f).
+        grxport: The external grafana port (from -g).
+        pgxport: The external database port (from -p).
+
+    Returns:
+        conf: The configuration dictionary.
     '''
     grname = bname + 'gr'
     pgname = bname + 'pg'

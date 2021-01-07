@@ -18,10 +18,10 @@ def help0():
     Top level help.
     '''
     print(f'''\
-Usage:
+USAGE:
     {PROGRAM} [COMMAND] [OPTIONS]
 
-Description:
+DESCRIPTION:
     Welcome to the Grafana Model Development tool.
 
     This tool allows you to create, develop and maintain Grafana
@@ -32,7 +32,7 @@ Description:
     To use this tool you must have python3, pipenv and docker
     installed.
 
-Commands:
+COMMANDS:
     Each command has its own help and examples. You get that help by
     specifying "COMMAND help" or "COMMAND -h" or "COMMAND --help".
 
@@ -86,7 +86,7 @@ Commands:
                 labels that were added when the containers
                 were started.
 
-Version:
+VERSION:
     {PROGRAM}-{__version__}
 ''')
     sys.exit(0)

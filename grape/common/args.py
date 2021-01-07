@@ -10,8 +10,14 @@ DEFAULT_NAME = 'grapex01'
 
 
 def args_get_text(string: str):
-    '''
-        Convert to upper case to make things consistent.
+    '''Convert to argparse section titles upper case to make things
+    consistent.
+
+    Args:
+        string: The string from argparse.
+
+    Returns:
+        string: The string in uppercase if it matches known patterns.
     '''
     lookup = {
         'usage: ': 'USAGE:',
@@ -23,8 +29,7 @@ def args_get_text(string: str):
 
 
 def add_common_args(parser: argparse.ArgumentParser):
-    '''
-    Arguments that common to all tools.
+    '''Add command line arguments that are common to all tools.
 
     Args:
         parser - The parser object.

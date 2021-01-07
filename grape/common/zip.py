@@ -8,15 +8,29 @@ from grape.common.log import info, err
 
 
 def load(conf: dict) -> dict:
-    '''
-    Load the zip data.
+    '''Load the zip state data.
+
+    The state data that describes a project is stored in
+    a zip file with known files. This function encapsulates
+    reading them.
+
+    The known files are: conf.json, gr.json and pg.sql.
+
+    The conf.json file contains project configuration data.
+
+    The gr.json file contains the grafana server datasources,
+    folders and dashboards setup.
+
+    The pq.sql contains the database setup.
+
+    The conf dictionary that is returned as three top level
+    keys: 'conf', 'gr' and 'pg'. One for each file read.
 
     Args:
-        opts - the command line arguments
+        opts: The command line arguments.
 
-    Returns
-        The conf, gr and pg data from the zip in
-        a dictionary.
+    Returns:
+        conf: The configuration data from each file.
     '''
     ofn = conf['file']
     if not os.path.exists(ofn):

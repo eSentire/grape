@@ -18,11 +18,10 @@ from grape import __version__
 
 
 def getopts() -> argparse.Namespace:
-    '''
-    Process the command line options.
+    '''Process the command line options.
 
     Returns:
-       The argument namespace.
+       opts: The argument namespace.
     '''
     argparse._ = args_get_text  # to capitalize help headers
     base = os.path.basename(sys.argv[0])
@@ -54,11 +53,10 @@ VERSION:
 
 
 def delete_containers(conf: dict):
-    '''
-    Delete the docker containers.
+    '''Delete the docker containers.
 
     Args:
-        conf - the configuration
+        conf: The configuration data.
     '''
     client = docker.from_env()
     for key in ['gr', 'pg']:
@@ -74,11 +72,10 @@ def delete_containers(conf: dict):
 
 
 def delete(conf: dict):
-    '''
-    Delete the docker infrastructure.
+    '''Delete the docker infrastructure.
 
     Args:
-        conf - the configuration
+        conf: The configuration data.
     '''
     delete_containers(conf)
     path = conf['pg']['name']
@@ -103,7 +100,10 @@ def delete(conf: dict):
 
 
 def main():
-    'main'
+    '''Delete command main.
+
+    This is the command line entry point for the delete command.
+    '''
     opts = getopts()
     initv(opts.verbose)
     info(f'deleting {opts.base} based containers')
