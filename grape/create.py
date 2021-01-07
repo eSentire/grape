@@ -129,7 +129,7 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
         {'key': 'pg', 'value': b'database system is ready to accept connections'},
     ]
     sleep = 0.1  # time to sleep
-    smodval = min(2, int(1. / sleep))  # report approximately every 2s
+    smodval = max(2, int(2. / sleep))  # report approximately every 2s
     for rec in recs:
         key = rec['key']
         val = rec['value']
