@@ -20,11 +20,10 @@ from grape import __version__
 
 
 def getopts() -> argparse.Namespace:
-    '''
-    Process the command line options.
+    '''Process the module specific command line options.
 
     Returns:
-       The argument namespace.
+       opts: The argument namespace.
     '''
     argparse._ = args_get_text  # to capitalize help headers
     base = os.path.basename(sys.argv[0])
@@ -60,11 +59,10 @@ VERSION:
 
 
 def create_start(kconf: dict):
-    '''
-    Create the start script.
+    '''Create the start script.
 
     Args:
-        kconf - the configuration for a key
+        kconf: The configuration for a key.
     '''
     # Create the start script.
     name = kconf['name']
@@ -109,7 +107,7 @@ echo "started - it may take up to 30 seconds to initialize"
     os.chmod(fname, 0o775)
 
 
-def create_container_init(conf: dict, waitval: float):
+def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-many-locals
     '''
     Wait for the containers to initialized by looking
     for messages in the logs.
@@ -121,54 +119,34 @@ def create_container_init(conf: dict, waitval: float):
         conf: The configuration.
         waitval: The container create wait time in seconds.
     '''
+    time.sleep(1)  # arbitrary short wait
     client = docker.from_env()
+
+    # The values are heuristic based on observation of the logs.
+    # They may have to change based on versions of docker.
     recs = [
         {'key': 'gr', 'value': b'created default admin'},
         {'key': 'pg', 'value': b'database system is ready to accept connections'},
     ]
-    def wait_timedout(start: float,  # pylint: disable=too-many-arguments
-                      i: int, ival: int,
-                      name: str,
-                      sleep: float, opname: str):
-        '''Check to see if the wait time limit was exceeded.
-        '''
-        elapsed = time.time() - start
-        if elapsed <= waitval:
-            if (i % ival) == 0:  # approximately once per second
-                info('   container not initialized yet, will try again '
-                     f'({opname}): {name} ({elapsed:0.1f})')
-            time.sleep(sleep)
-            return False
-
-        # Worst case is that we simply wait the maximum time.
-        warn(f'   container failed to initialize ({opname}): "{name}"')
-        return True
-
+    sleep = 0.1  # time to sleep
+    smodval = min(2, int(1. / sleep))  # report approximately every 2s
     for rec in recs:
         key = rec['key']
         val = rec['value']
         name = conf[key]['name']
         info(f'checking container initialization status of "{name}" with max wait: {waitval}')
-        start = time.time()
-        wval = 0.1  # wait time value in seconds
-        ival = 10  # report about once per second
 
         # Load the containers.
         # Note that the the containers.get() and the logs() operations
         # are glommed together under the same timeout because the user
         # only cares about the total time.
-        i = 0
-        while True:
-            try:
-                cobj = client.containers.get(name)
-                break
-            except docker.errors.NotFound:
-                time.sleep(wval)
-            i += 1
-            if wait_timedout(start, i, ival, name, wval, 'get'):
-                break
+        try:
+            cobj = client.containers.get(name)
+        except docker.errors.NotFound as exc:
+            err(f'container failed to initialize: "{name}" - {exc}')
 
         # Read the container logs.
+        start = time.time()
         logs = ''
         i = 0
         while True:
@@ -177,12 +155,18 @@ def create_container_init(conf: dict, waitval: float):
                 if val in logs.lower():
                     info(f'container initialized: "{name}"')
                     break
-            except docker.errors.NotFound:
-                time.sleep(wval)
-            i += 1
-            if wait_timedout(start, i, ival, name, wval, 'logs'):
-                err(f'cannot continue:\nLOG: ({len(logs)}):\n{logs.decode("utf-8")}')
-                break
+            except docker.errors.NotFound as exc:
+                err(f'container failed to initialize: "{name}" - {exc}')
+
+            elapsed = time.time() - start
+            if elapsed <= waitval:
+                i += 1
+                if (i % smodval) == 0:
+                    info(f'   container not initialized yet, will try again: {name}')
+                time.sleep(sleep)
+            else:
+                # Worst case is that we simply wait the maximum time.
+                err(f'container failed to initialize: "{name}"\nData: {logs}')
 
 
 def create_containers(conf: dict, waitval: float):
