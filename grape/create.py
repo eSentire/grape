@@ -162,7 +162,8 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
             if elapsed <= waitval:
                 i += 1
                 if (i % smodval) == 0:
-                    info(f'   container not initialized yet, will try again: {name}')
+                    info('   container not initialized yet, will try again: '
+                         f'{name} ({elapsed:0.1f}s)')
                 time.sleep(sleep)
             else:
                 # Worst case is that we simply wait the maximum time.
