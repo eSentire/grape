@@ -10,7 +10,7 @@ import os
 import sys
 import time
 
-import docker
+import docker  # type: ignore
 
 from grape.common.args import DEFAULT_NAME, CLI, add_common_args, args_get_text
 from grape.common.log import initv, info, warn, err
@@ -25,7 +25,7 @@ def getopts() -> argparse.Namespace:
     Returns:
        opts: The argument namespace.
     '''
-    argparse._ = args_get_text  # to capitalize help headers
+    argparse._ = args_get_text  # type: ignore
     base = os.path.basename(sys.argv[0])
     usage = '\n {0} [OPTIONS]'.format(base)
     desc = 'DESCRIPTION:{0}'.format('\n  '.join(__doc__.split('\n')))
@@ -135,8 +135,8 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
     # The values below are heuristic based on empirical observation of
     # the logs. They may have to change based on versions of docker.
     recs = [
-        {'key': 'gr', 'value': b'created default admin'},
-        {'key': 'pg', 'value': b'database system is ready to accept connections'},
+        {'key': 'gr', 'value': 'created default admin'},
+        {'key': 'pg', 'value': 'database system is ready to accept connections'},
     ]
 
     # Define the sleep interval.
@@ -166,7 +166,7 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
         i = 0
         while True:
             try:
-                logs = cobj.logs(tail=20)
+                logs = str(cobj.logs(tail=20))
                 if val in logs.lower():
                     elapsed = time.time() - start
                     info(f'container initialized: "{name}" after {elapsed:0.1f} seconds')
@@ -186,7 +186,7 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
                 err(f'container failed to initialize: "{name}"\nData: {logs}')
 
 
-def create_containers(conf: dict, waitval: float):
+def create_containers(conf: dict, wait: float):
     '''Create the docker containers.
 
     Args:
@@ -195,7 +195,7 @@ def create_containers(conf: dict, waitval: float):
     '''
     create_start(conf['pg'])  # only needed for the database
     client = docker.from_env()
-    wait = 0
+    num = 0
     for key in ['gr', 'pg']:
         kconf = conf[key]
         cname = kconf['cname']
@@ -211,7 +211,7 @@ def create_containers(conf: dict, waitval: float):
                 os.makedirs(key1)
                 os.chmod(key1, 0o775)
             except FileExistsError as exc:
-                warn(exc)
+                warn(str(exc))
 
         ports = kconf['ports']
         info(f'creating container "{cname}": {ports}')
@@ -224,7 +224,7 @@ def create_containers(conf: dict, waitval: float):
                               ports=ports,
                               environment=kconf['env'],
                               volumes=kconf['vols'])
-        wait = waitval
+        num += 1
 
     if wait:
         create_container_init(conf, wait)

@@ -52,7 +52,7 @@ def load(conf: dict, sql: str):
             tcnt += 1
             warn(f'try {tcnt} of {tmax}\n' + exc.output.decode('utf-8'))
             if tcnt == tmax:
-                err(exc)
+                err(str(exc))
             time.sleep(5)
     debug(out.decode('utf-8'))
 
@@ -77,7 +77,7 @@ def save(conf: dict) -> str:
         info(cmd)
         out = subprocess.check_output(cmd, shell=True)
     except subprocess.CalledProcessError as exc:
-        warn(exc)
+        warn(str(exc))
         out = b'-- no pg docker container'
     sql = str(out.decode('utf-8'))
     info(f'read {len(sql)} bytes of sql for the database')

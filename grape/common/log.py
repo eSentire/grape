@@ -110,6 +110,7 @@ def info(msg: str, level: int = 1):
         msg: The message.
         level: The stack level (default: parent).
     '''
+    assert LOG  # make sure LOG is initialized
     try:
         LOG.info(msg, stacklevel=level+1, extra=extra())
     except ValueError:  # recover from pylint IO issue
@@ -124,6 +125,7 @@ def warn(msg: str, level: int = 1):
         msg: The message.
         level: The stack level (default: parent).
     '''
+    assert LOG  # make sure LOG is initialized
     try:
         LOG.warning(msg, stacklevel=level+1, extra=extra())
     except ValueError:  # recover from pylint IO issue
@@ -141,6 +143,7 @@ def debug(msg: str, level: int = 1):
         msg: The message.
         level: The stack level (default: parent).
     '''
+    assert LOG  # make sure LOG is initialized
     try:
         LOG.debug(msg, stacklevel=level+1, extra=extra())
     except ValueError:  # recover from pylint IO issue
@@ -158,6 +161,7 @@ def err(msg: str, level: int = 1, xflag=True, xcode=1):
         xflag: If true, exit. The default is to exit.
         xcode: The exit code. The default is 1.
     '''
+    assert LOG  # make sure LOG is initialized
     try:
         LOG.error(msg, stacklevel=level+1, extra=extra())
     except ValueError:  # recover from pylint IO issue

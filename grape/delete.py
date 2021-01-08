@@ -9,7 +9,7 @@ import subprocess
 import sys
 import time
 
-import docker
+import docker  # type: ignore
 
 from grape.common.args import DEFAULT_NAME, CLI, add_common_args, args_get_text
 from grape.common.log import initv, info, err, warn
@@ -23,7 +23,7 @@ def getopts() -> argparse.Namespace:
     Returns:
        opts: The argument namespace.
     '''
-    argparse._ = args_get_text  # to capitalize help headers
+    argparse._ = args_get_text  # type: ignore
     base = os.path.basename(sys.argv[0])
     usage = '\n {0} [OPTIONS]'.format(base)
     desc = 'DESCRIPTION:{0}'.format('\n  '.join(__doc__.split('\n')))
@@ -88,13 +88,13 @@ def delete(conf: dict):
         except PermissionError as exc:
             # Bad news!
             # Try deleting it as sudo.
-            warn(exc)  # This is not okay!
+            warn(str(exc))  # This is not okay!
             warn('will try to delete as sudo')
             cmd = f'sudo rm -rf {path}'
             try:
                 subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
             except subprocess.CalledProcessError as exc:
-                err(exc)  # failed as exec
+                err(str(exc))  # failed as exec
     else:
         info(f'directory does not exist: {path}')
 

@@ -28,7 +28,7 @@ def getopts() -> argparse.Namespace:
     Returns:
        opts: The argument namespace.
     '''
-    argparse._ = args_get_text  # to capitalize help headers
+    argparse._ = args_get_text  # type: ignore
     base = os.path.basename(sys.argv[0])
     usage = '\n {0} [OPTIONS]'.format(base)
     desc = 'DESCRIPTION:{0}'.format('\n  '.join(__doc__.split('\n')))
@@ -102,7 +102,7 @@ def save_gr_read(conf: dict, service: str) -> dict:
     try:
         response = requests.get(url, auth=auth, headers=headers)
     except requests.ConnectionError as exc:
-        err(exc)
+        err(str(exc))
     if response.status_code != 200:
         err(f'request to {url} failed with status {response.status_code}\n'
             f'{json.dumps(response.json(), indent=2)}')

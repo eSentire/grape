@@ -11,9 +11,10 @@ import argparse
 import datetime
 import os
 import sys
+from typing import List
 
 import dateutil.parser
-import docker
+import docker  # type: ignore
 
 from grape.common.args import CLI, add_common_args, args_get_text
 from grape.common.log import initv, info
@@ -25,9 +26,9 @@ def getopts() -> argparse.Namespace:
     Process the command line options.
 
     Returns:
-       The argument namespace.
+       opts: The argument namespace.
     '''
-    argparse._ = args_get_text  # to capitalize help headers
+    argparse._ = args_get_text  # type: ignore
     base = os.path.basename(sys.argv[0])
     usage = '\n {0} [OPTIONS]'.format(base)
     desc = 'DESCRIPTION:{0}'.format('\n  '.join(__doc__.split('\n')))
@@ -64,12 +65,12 @@ VERSION:
 
 class Column:
     '''
-    The column.
+    A column in the status report.
     '''
     def __init__(self, name: str):
         self.m_name = name
         self.m_maxlen = len(name)
-        self.m_rows = []
+        self.m_rows : List[str] = []
 
     def add(self, value: str):
         '''
@@ -78,13 +79,13 @@ class Column:
         self.m_maxlen = max(self.m_maxlen, len(value))
         self.m_rows.append(value)
 
-    def size(self):
+    def size(self) -> int:
         '''
         Return the number of rows.
         '''
         return len(self.m_rows)
 
-    def get(self, i: int, prefix: str = '  '):
+    def get(self, i: int, prefix: str = '  ') -> str:
         '''
         Returns the formatted value for a row.
         '''
@@ -92,7 +93,7 @@ class Column:
         fmt = f'{prefix}{val:<{self.m_maxlen}}'
         return fmt
 
-    def hdr(self, prefix: str = '  '):
+    def hdr(self, prefix: str = '  ') -> str:
         '''
         Returns the formatted value for a row.
         '''
@@ -102,8 +103,13 @@ class Column:
 
 
 def get_elapsed_time(start_str: str) -> str:
-    '''
-    Get the elapsed time in seconds.
+    '''Get the elapsed time in seconds.
+
+    Args:
+        start_str: The container start timestamp.
+
+    Returns:
+        exlapsed: The elapsed time as a string.
     '''
     start = dateutil.parser.parse(start_str)
     now = datetime.datetime.now(datetime.timezone.utc)
@@ -122,7 +128,10 @@ def get_elapsed_time(start_str: str) -> str:
 
 
 def main():
-    'main'
+    '''Status command main.
+
+    This is the command line entry point for the status command.
+    '''
     opts = getopts()
     initv(opts.verbose)
     info('status')
@@ -135,6 +144,7 @@ def main():
             'elapsed': Column('Elapsed'),
             'image': Column('Image'),
             'name': Column('Name'),
+            'ports': Column('Ports'),
             'started': Column('Started'),
             'status': Column('Status'),
             'type': Column('Type'),
@@ -156,8 +166,20 @@ def main():
             cols['started'].add('')
             cols['elapsed'].add('')
 
+        # Add the ports.
+        ports = []
+        pobjs = container.attrs['HostConfig']['PortBindings']
+        ##print(json.dumps(pobjs, indent=4))
+        for pobj in pobjs.values():
+            if 'HostPort' in pobj:
+                ports.append(pobj['HostPort'])
+        pstr = ','.join(sorted(ports))
+        print(pstr)
+        cols['ports'].add(pstr)
+
     # Report the status.
-    colnames = ['name', 'type', 'version', 'status', 'started', 'elapsed', 'id', 'image', 'created']
+    colnames = ['name', 'type', 'version', 'status', 'started',
+                'elapsed', 'id', 'image', 'created', 'ports']
     ofp = sys.stdout
     if opts.verbose:
         if ofp == sys.stdout:

@@ -3,7 +3,8 @@ Common grafana utilities.
 '''
 import json
 from functools import reduce
-import docker
+from typing import List
+import docker  # type: ignore
 import requests
 from grape.common.log import info, err
 
@@ -83,7 +84,7 @@ def load_datasources(conf: dict, recs: list):
                                      auth=auth,
                                      headers=headers)
         except requests.ConnectionError as exc:
-            err(exc)
+            err(str(exc))
         info(f'response status: {response.status_code} from {url}')
         if response.status_code not in (200, 409):
             err(f'upload failed with status {response.status_code} to {url}')
@@ -113,7 +114,7 @@ def load_folders(conf: dict, recs: list):
                                      auth=auth,
                                      headers=headers)
         except requests.ConnectionError as exc:
-            err(exc)
+            err(str(exc))
         info(f'response status: {response.status_code} from {url}')
         if response.status_code not in (200, 412, 500):
             err(f'upload failed with status {response.status_code} to {url}')
@@ -148,7 +149,7 @@ def load_fmap(conf: dict, recs: list) -> dict:
                                 auth=auth,
                                 headers=headers)
     except requests.ConnectionError as exc:
-        err(exc)
+        err(str(exc))
     if response.status_code != 200:
         err(f'download failed with status {response.status_code} to {url}')
     folders = response.json()  # these are the new folders
@@ -200,7 +201,7 @@ def load_dashboards(conf: dict, recs: list, fmap: dict):
                                      auth=auth,
                                      headers=headers)
         except requests.ConnectionError as exc:
-            err(exc)
+            err(str(exc))
         info(f'response status: {response.status_code} from {url}')
         if response.status_code not in (200, 400, 412):
             err(f'upload failed with status {response.status_code} to {url}')
@@ -238,7 +239,7 @@ def read_service(burl: str, auth: tuple, service: str) -> dict:
     try:
         response = requests.get(url, auth=auth, headers=headers)
     except requests.ConnectionError as exc:
-        err(exc)
+        err(str(exc))
     if response.status_code != 200:
         err(f'request to {url} failed with status {response.status_code}\n'
             f'{json.dumps(response.json(), indent=2)}')
@@ -267,9 +268,9 @@ def read_all_services(burl: str, auth: tuple) -> dict:
     # Read the folders.
     folders = read_service(burl, auth, 'api/folders?limit=100')
     info(f'read {len(folders)} folders')
-    fids = reduce(lambda x, y: x+[y] if not y in x else x,
-                  [fid['id'] for fid in folders],
-                  [])
+    fids : List[int] = reduce(lambda x, y: x+[y] if not y in x else x,
+                              [fid['id'] for fid in folders],
+                              [])
     if not fids:
         # The General folder always exists.
         fids = [0]

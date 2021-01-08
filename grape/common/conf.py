@@ -4,12 +4,13 @@ The conf data for all tools.
 import datetime
 import json
 import os
+from typing import Any, Dict
 
 from grape.common.log import debug
 from grape import __version__
 
 
-def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> dict:
+def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> Dict[str, Any]:
     '''Get the grape project configuration data used by all tools.
 
     This is used by each of the commands and is customized by
@@ -28,7 +29,7 @@ def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> dict:
     pgname = bname + 'pg'
     pgpath_share = os.path.join(os.getcwd(), pgname)
     pgpath_mnt = os.path.join(pgpath_share, 'mnt')
-    conf = {
+    conf : Dict[str, Any] = {
         'timestamp': datetime.datetime.utcnow().isoformat(timespec='seconds'),
         'version': __version__,
         'base': bname,
