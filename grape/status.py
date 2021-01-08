@@ -126,29 +126,13 @@ def get_elapsed_time(start_str: str) -> str:
         fmt = f'{days[0]} days, ' + fmt
     return fmt
 
+def populate_columns(containers: list, cols: dict):
+    '''Populate the columns with data from each container.
 
-def main():
-    '''Status command main.
-
-    This is the command line entry point for the status command.
+    Args:
+        containers: The list of containers.
+        cols: This list of report columns.
     '''
-    opts = getopts()
-    initv(opts.verbose)
-    info('status')
-    client = docker.from_env()
-    containers = client.containers.list(filters={'label': 'grape.type'})
-
-    # Collect report rows for each column.
-    cols = {'created': Column('Created'),
-            'id': Column('Id'),
-            'elapsed': Column('Elapsed'),
-            'image': Column('Image'),
-            'name': Column('Name'),
-            'ports': Column('Ports'),
-            'started': Column('Started'),
-            'status': Column('Status'),
-            'type': Column('Type'),
-            'version': Column('Version')}
     for container in sorted(containers, key=lambda x: x.name.lower()):
         cols['created'].add(container.attrs['Created'])
         cols['id'].add(container.short_id)
@@ -169,15 +153,43 @@ def main():
         # Add the ports.
         ports = []
         pobjs = container.attrs['HostConfig']['PortBindings']
-        ##print(json.dumps(pobjs, indent=4))
-        for pobj in pobjs.values():
-            if 'HostPort' in pobj:
-                ports.append(pobj['HostPort'])
+        for attrs in pobjs.values():
+            for attr in attrs:
+                if 'HostPort' in attr:
+                    value = attr['HostPort']
+                    ports.append(value)
         pstr = ','.join(sorted(ports))
-        print(pstr)
         cols['ports'].add(pstr)
 
-    # Report the status.
+
+def main():
+    '''Status command main.
+
+    This is the command line entry point for the status command.
+
+    It list the statistics for all grape containers running on
+    the current system.
+    '''
+    opts = getopts()
+    initv(opts.verbose)
+    info('status')
+    client = docker.from_env()
+    containers = client.containers.list(filters={'label': 'grape.type'})
+
+    # Collect report rows for each column.
+    cols = {'created': Column('Created'),
+            'id': Column('Id'),
+            'elapsed': Column('Elapsed'),
+            'image': Column('Image'),
+            'name': Column('Name'),
+            'ports': Column('Ports'),
+            'started': Column('Started'),
+            'status': Column('Status'),
+            'type': Column('Type'),
+            'version': Column('Version')}
+    populate_columns(containers, cols)
+
+    # Report the status for all of the containers.
     colnames = ['name', 'type', 'version', 'status', 'started',
                 'elapsed', 'id', 'image', 'created', 'ports']
     ofp = sys.stdout
