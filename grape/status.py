@@ -182,7 +182,7 @@ def main():
             'elapsed': Column('Elapsed'),
             'image': Column('Image'),
             'name': Column('Name'),
-            'ports': Column('Ports'),
+            'ports': Column('Port'),
             'started': Column('Started'),
             'status': Column('Status'),
             'type': Column('Type'),
