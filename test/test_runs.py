@@ -4,8 +4,9 @@ Test run operations like create, delete, save and load.
 The tests must run in module order because they have dependencies on
 the previous results.
 
-One could use the pytest-depend module to enforce the ordering but
-that is overkill since the default is module order.
+That is enforced using pytest-depends. Using dependencies ensures that
+future refactoring won't affect implicit dependencies and it ensures
+that running a single test will create the proper pre-requisities.
 
 Creating and deleting the projects takes a long time (30 seconds or
 so) so creating a fixture to create and tear down projects for each
@@ -77,7 +78,7 @@ def make_names(name: str) -> Tuple[str, str, str]:
     return name + 'gr', name + 'pg', name + '.zip'
 
 
-def test_run_01_cli(capsys: Any):
+def test_run_cli(capsys: Any):
     'test the wrapper interface'
     fct = inspect.stack()[0].function  # fct name
 
@@ -141,6 +142,7 @@ def test_run_01_cli(capsys: Any):
     assert exc.value.code != 0
 
 
+@pytest.mark.depends(on=['test_run_cli'])
 @pytest.mark.parametrize(
     'name,gport',
     [
@@ -148,8 +150,8 @@ def test_run_01_cli(capsys: Any):
         (NAME2, GPORT2),
     ],
 )
-def test_run_02_delete(capsys: Any, name: str, gport: int):
-    '''Delete a project.
+def test_run_init(capsys: Any, name: str, gport: int):
+    '''Initialization: delete a project.
 
     In this case the project should not already exist.
 
@@ -177,13 +179,14 @@ def test_run_02_delete(capsys: Any, name: str, gport: int):
     assert not os.path.exists(namezp)
 
 
+@pytest.mark.depends(on=['test_run_init'])
 @pytest.mark.parametrize(
     'name,gport',
     [
         (NAME, GPORT),
     ],
 )
-def test_run_03_create(capsys: Any, name: str, gport: int):
+def test_run_create(capsys: Any, name: str, gport: int):
     '''Create a project.
 
     The project will be used in subsequent tests.
@@ -212,13 +215,14 @@ def test_run_03_create(capsys: Any, name: str, gport: int):
     assert len(cpg) == 1
 
 
+@pytest.mark.depends(on=['test_run_create'])
 @pytest.mark.parametrize(
     'name,gport',
     [
         (NAME, GPORT),
     ],
 )
-def test_run_04_save(capsys: Any, name: str, gport: int):
+def test_run_save(capsys: Any, name: str, gport: int):
     '''Save the project data to a zip file.
 
     This file will be used in the next text.
@@ -248,13 +252,14 @@ def test_run_04_save(capsys: Any, name: str, gport: int):
     assert 'pg.sql' in names
 
 
+@pytest.mark.depends(on=['test_run_save'])
 @pytest.mark.parametrize(
     'name,gport',
     [
         (NAME, GPORT),
     ],
 )
-def test_run_05_load(capsys: Any, name: str, gport: int):
+def test_run_load(capsys: Any, name: str, gport: int):
     '''Load the saved data from the zip file create in the previous
     test.
 
@@ -276,13 +281,14 @@ def test_run_05_load(capsys: Any, name: str, gport: int):
     assert namepg in err
 
 
+@pytest.mark.depends(on=['test_run_load'])
 @pytest.mark.parametrize(
     'name,gport',
     [
         (NAME, GPORT),
     ],
 )
-def test_run_06_import(capsys: Any, name: str, gport: int):
+def test_run_import(capsys: Any, name: str, gport: int):
     '''Import data into the test project.
 
     Args:
@@ -314,13 +320,14 @@ def test_run_06_import(capsys: Any, name: str, gport: int):
     os.unlink(xcfn)
 
 
+@pytest.mark.depends(on=['test_run_import'])
 @pytest.mark.parametrize(
     'name,name2,gport2',
     [
         (NAME, NAME2, GPORT2),
     ],  # pylint: disable=too-many-locals
 )
-def test_run_07_export(capsys: Any, name: str, name2: str, gport2: int):
+def test_run_export(capsys: Any, name: str, name2: str, gport2: int):
     '''Export data into the test project.
 
     Args:
@@ -371,13 +378,14 @@ def test_run_07_export(capsys: Any, name: str, name2: str, gport2: int):
     os.unlink(xcfn)
 
 
+@pytest.mark.depends(on=['test_run_export'])
 @pytest.mark.parametrize(
     'name,name2',
     [
         (NAME, NAME2),
     ],
 )
-def test_run_08_status(capsys: Any, name: str, name2: str):
+def test_run_status(capsys: Any, name: str, name2: str):
     '''Check the status of the containers created in previous tests.
 
     Args:
@@ -404,6 +412,7 @@ def test_run_08_status(capsys: Any, name: str, name2: str):
     assert len(containers) >= 2
 
 
+@pytest.mark.depends(on=['test_run_status'])
 @pytest.mark.parametrize(
     'name,gport',
     [
@@ -411,7 +420,7 @@ def test_run_08_status(capsys: Any, name: str, name2: str):
         (NAME2, GPORT2),
     ],
 )
-def test_run_09_cleanup(capsys: Any, name: str, gport: int):
+def test_run_cleanup(capsys: Any, name: str, gport: int):
     '''Delete a grape project.
 
     It is called multiple times to clean up the test artifacts.
