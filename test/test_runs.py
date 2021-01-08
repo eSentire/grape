@@ -1,5 +1,15 @@
 '''
 Test run operations like create, delete, save and load.
+
+The tests must run in module order because they have dependencies on
+the previous results.
+
+One could use the pytest-depend module to enforce the ordering but
+that is overkill since the default is module order.
+
+Creating and deleting the projects takes a long time (30 seconds or
+so) so creating a fixture to create and tear down projects for each
+test would slow things down too much.
 '''
 import inspect
 import os
@@ -369,6 +379,7 @@ def test_run_08_status(capsys: Any, name: str, name2: str):
         name2: The export grape project.
     '''
     namegr, namepg, _namezp = make_names(name)
+    _namegr2, namepg2, _namezp2 = make_names(name2)
     fct = inspect.stack()[0].function
 
     # Prerequisites.
