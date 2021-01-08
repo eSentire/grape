@@ -27,7 +27,7 @@ def getopts() -> argparse.Namespace:
     Process the command line options.
 
     Returns:
-       The argument namespace.
+       opts: The argument namespace.
     '''
     argparse._ = args_get_text  # type: ignore
     base = os.path.basename(sys.argv[0])
@@ -71,8 +71,8 @@ def xexport(conf: dict, xconf: str):
     as well as a load zip file.
 
     Args:
-        conf - the configuration
-        xconf - the external conf
+        conf: The configuration data.
+        xconf: The external grafana configuration data.
     '''
     info('export')
 
@@ -131,7 +131,10 @@ def xexport(conf: dict, xconf: str):
 
 
 def main():
-    'main'
+    '''Export command main.
+
+    This is the command line entry point for the export command.
+    '''
     opts = getopts()
     initv(opts.verbose)
     info(f'export using {opts.xconf}')

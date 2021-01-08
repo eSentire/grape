@@ -34,7 +34,7 @@ def getopts() -> argparse.Namespace:
     Process the command line options.
 
     Returns:
-       The argument namespace.
+       opts: The argument namespace.
     '''
     argparse._ = args_get_text  # type: ignore
     base = os.path.basename(sys.argv[0])
@@ -96,8 +96,8 @@ def ximport(conf: dict, xconf: str):
     This operation requires an import conf file.
 
     Args:
-        conf - the configuration
-        xconf - the external conf
+        conf: The configuration data.
+        xconf: The external grafana configuration data.
     '''
     info('import')
     ofn = conf['file']
@@ -125,7 +125,10 @@ def ximport(conf: dict, xconf: str):
 
 
 def main():
-    'main'
+    '''Import command main.
+
+    This is the command line entry point for the import command.
+    '''
     opts = getopts()
     initv(opts.verbose)
     info(f'import from {opts.xconf}')
