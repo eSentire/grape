@@ -120,17 +120,31 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
         conf: The configuration data.
         waitval: The container create wait time in seconds.
     '''
-    time.sleep(1)  # arbitrary short wait
+    # This is a heuristic that does a short wait to give docker
+    # sufficient time to start to define the new containers before we
+    # start to query them.
+    #
+    # In particular, this significantly reduces the chance
+    # that the docker.errors.NotFound exception will be
+    # raised.
+    #
+    # One second is probably overkill.
+    time.sleep(1)
     client = docker.from_env()
 
-    # The values are heuristic based on observation of the logs.
-    # They may have to change based on versions of docker.
+    # The values below are heuristic based on empirical observation of
+    # the logs. They may have to change based on versions of docker.
     recs = [
         {'key': 'gr', 'value': b'created default admin'},
         {'key': 'pg', 'value': b'database system is ready to accept connections'},
     ]
+
+    # Define the sleep interval.
+    # Try to report status about every 2 seconds or so based on elaped time.
     sleep = 0.1  # time to sleep
     smodval = max(2, int(2. / sleep))  # report approximately every 2s
+
+    # Wait the containers to initialize.
     for rec in recs:
         key = rec['key']
         val = rec['value']
