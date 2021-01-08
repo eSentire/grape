@@ -36,6 +36,31 @@ GPORT2 = 4710
 NAME2 = 'grape_test2'
 
 
+def make_yaml_file(path: str, gport: int):
+    '''Make the YAML file for the grafana server login.
+
+    Args:
+        gport: The grafana server port.
+        path: The YAML file name.
+
+    Raises:
+        OSError: If the local filesystem is read-only. That should
+            never happen.
+    '''
+    content = f'''\
+url: http://localhost:{gport}/
+username: 'admin'
+password: 'admin'
+databases:
+  - database: 'postgres'
+    password: 'password'
+'''
+
+    # Write the file.
+    with open(path, 'w') as ofp:
+        ofp.write(content)
+
+
 def make_names(name: str) -> Tuple[str, str, str]:
     '''Simple function that generates useful names.
 
@@ -268,22 +293,14 @@ def test_run_06_import(capsys: Any, name: str, gport: int):
     namegr, namepg, namezp = make_names(name)
     fct = inspect.stack()[0].function
 
-    # Setup.
+    # Prerequisites.
     assert os.path.exists(namepg)
     if os.path.exists(namezp):
         os.unlink(namezp)
-    xcfn = fct + '.yaml'
-    with open(xcfn, 'w') as ofp:
-        ofp.write(f'''\
-# Grafana login.
-url: http://localhost:{gport}
-username: 'admin'
-password: 'admin'
 
-databases:
-  - database: 'postgres'
-    password: 'password'
-''')
+    # Create the YAML conf file for logging in.
+    xcfn = fct + '.yaml'
+    make_yaml_file(xcfn, gport)
     assert os.path.exists(xcfn)
 
     # Run import.
@@ -335,22 +352,13 @@ def test_run_07_export(capsys: Any, name: str, gport: int, name2: str, gport2: i
     cpg = client.containers.list(filters={'name': namepg2})
     assert len(cpg) == 1
 
-    # Setup.
+    # Prerequisites.
     assert os.path.exists(namezp)  # the import zip.
     assert os.path.exists(namepg2)  # the export database
 
+    # Create the YAML conf file for logging in.
     xcfn = fct + '.yaml'
-    with open(xcfn, 'w') as ofp:
-        ofp.write(f'''\
-# Grafana login.
-url: http://localhost:{gport2}/
-username: 'admin'
-password: 'admin'
-
-databases:
-  - database: 'postgres'
-    password: 'password'
-''')
+    make_yaml_file(xcfn, gport2)
     assert os.path.exists(xcfn)
 
     # Export the primary container to it.
