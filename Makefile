@@ -53,6 +53,12 @@ pylint: init  ## Lint the source code.
 	$(call hdr,"$@")
 	pipenv run pylint --disable=duplicate-code $(PKG) test
 
+# mypy
+.PHONY: mypy
+mypy: init  ## Type check the source code.
+	$(call hdr,"$@")
+	pipenv run mypy $(PKG) test
+
 # demo01
 .PHONY: demo01
 demo01:  ## Run samples/demo01.
@@ -103,11 +109,12 @@ help:  ## This help message.
 		sort -f | \
 		sed -e 's@^@   @'
 
-# Make wheel with pylint check that only runs when
-# updates are detected.
+# Make wheel with pylint and type checking that only run when updates
+# are detected.
 .wheel-install: $(WHEEL_DEPS)
 	$(call hdr,"package")
-	pipenv run pylint --disable=duplicate-code $(PKG)
+	pipenv run pylint --disable=duplicate-code $(PKG) test
+	pipenv run mypy $(PKG) test
 	$(MAKE) wheel-install
 	touch $@
 
