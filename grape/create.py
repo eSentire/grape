@@ -13,18 +13,17 @@ import time
 import docker
 
 from grape.common.args import DEFAULT_NAME, CLI, add_common_args, args_get_text
-from grape.common.log import initv, info, warn
+from grape.common.log import initv, info, warn, err
 from grape.common.conf import get_conf
 from grape.common.gr import load_datasources
 from grape import __version__
 
 
 def getopts() -> argparse.Namespace:
-    '''
-    Process the command line options.
+    '''Process the module specific command line options.
 
     Returns:
-       The argument namespace.
+       opts: The argument namespace.
     '''
     argparse._ = args_get_text  # to capitalize help headers
     base = os.path.basename(sys.argv[0])
@@ -60,11 +59,10 @@ VERSION:
 
 
 def create_start(kconf: dict):
-    '''
-    Create the start script.
+    '''Create the start script.
 
     Args:
-        kconf - the configuration for a key
+        kconf: The configuration for a key.
     '''
     # Create the start script.
     name = kconf['name']
@@ -109,7 +107,7 @@ echo "started - it may take up to 30 seconds to initialize"
     os.chmod(fname, 0o775)
 
 
-def create_container_init(conf: dict, waitval: float):
+def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-many-locals
     '''
     Wait for the containers to initialized by looking
     for messages in the logs.
@@ -118,35 +116,73 @@ def create_container_init(conf: dict, waitval: float):
     faster than just doing a simple wait.
 
     Args:
-        conf - the configuration
-        wait - the container create wait time
+        conf: The configuration.
+        waitval: The container create wait time in seconds.
     '''
+    # This is a heuristic that does a short wait to give docker
+    # sufficient time to start to define the new containers before we
+    # start to query them.
+    #
+    # In particular, this significantly reduces the chance
+    # that the docker.errors.NotFound exception will be
+    # raised.
+    #
+    # One second is probably overkill.
+    time.sleep(1)
     client = docker.from_env()
+
+    # The values below are heuristic based on empirical observation of
+    # the logs. They may have to change based on versions of docker.
     recs = [
         {'key': 'gr', 'value': b'created default admin'},
         {'key': 'pg', 'value': b'database system is ready to accept connections'},
     ]
+
+    # Define the sleep interval.
+    # Try to report status about every 2 seconds or so based on elaped time.
+    sleep = 0.1  # time to sleep
+    smodval = max(2, int(2. / sleep))  # report approximately every 2s
+
+    # Wait the containers to initialize.
     for rec in recs:
         key = rec['key']
         val = rec['value']
         name = conf[key]['name']
         info(f'checking container initialization status of "{name}" with max wait: {waitval}')
-        cobj = client.containers.get(name)
+
+        # Load the containers.
+        # Note that the the containers.get() and the logs() operations
+        # are glommed together under the same timeout because the user
+        # only cares about the total time.
+        try:
+            cobj = client.containers.get(name)
+        except docker.errors.NotFound as exc:
+            err(f'container failed to initialize: "{name}" - {exc}')
+
+        # Read the container logs.
+        start = time.time()
+        logs = ''
         i = 0
         while True:
-            logs = cobj.logs(tail=20)
-            if val in logs.lower():
-                info(f'container initialized: "{name}"')
-                break
-            if i < waitval:
+            try:
+                logs = cobj.logs(tail=20)
+                if val in logs.lower():
+                    elapsed = time.time() - start
+                    info(f'container initialized: "{name}" after {elapsed:0.1f} seconds')
+                    break
+            except docker.errors.NotFound as exc:
+                err(f'container failed to initialize: "{name}" - {exc}')
+
+            elapsed = time.time() - start
+            if elapsed <= waitval:
                 i += 1
-                if (i % 5) == 0:
-                    info(f'   container not initialized yet, will try again: {name}')
-                time.sleep(1)
+                if (i % smodval) == 0:
+                    info('   container not initialized yet, will try again: '
+                         f'{name} ({elapsed:0.1f}s)')
+                time.sleep(sleep)
             else:
                 # Worst case is that we simply wait the maximum time.
-                warn(f'   container failed to initialize: "{name}"')
-                break
+                err(f'container failed to initialize: "{name}"\nData: {logs}')
 
 
 def create_containers(conf: dict, waitval: float):
@@ -154,8 +190,8 @@ def create_containers(conf: dict, waitval: float):
     Create the docker containers.
 
     Args:
-        conf - the configuration
-        wait - the container create wait time
+        conf: The configuration.
+        wait: The container create wait time.
     '''
     create_start(conf['pg'])  # only needed for the database
     client = docker.from_env()
@@ -199,8 +235,8 @@ def create(conf: dict, wait: float):
     Create the docker infrastructure.
 
     Args:
-        conf - the configuration
-        wait - the container create wait time
+        conf: The configuration.
+        wait: The container create wait time.
     '''
     create_containers(conf, wait)
     datasources = [conf['gr']['datasource']]

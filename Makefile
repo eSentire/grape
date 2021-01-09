@@ -41,16 +41,17 @@ pkg: init .wheel-install  ## Build the grape package wheel (same as wheel).
 wheel: .wheel-install  ## Build the grape package wheel (same as pkg).
 
 # test
+# initialize before each run
 .PHONY: test
 test: init  ## Run the unit tests.
 	$(call hdr,$@)
-	cd test && pipenv run pytest -v --cov=grape --cov-report=html --html=report.html .
+	cd test && pipenv run pytest -x -v --cov=grape --cov-report=html --html=report.html .
 
 # pylint
 .PHONY: pylint
 pylint: init  ## Lint the source code.
 	$(call hdr,"$@")
-	pipenv run pylint --disable=duplicate-code $(PKG)
+	pipenv run pylint --disable=duplicate-code $(PKG) test
 
 # demo01
 .PHONY: demo01
