@@ -11,9 +11,10 @@ import argparse
 import datetime
 import os
 import sys
+from typing import List
 
 import dateutil.parser
-import docker
+import docker  # type: ignore
 
 from grape.common.args import CLI, add_common_args, args_get_text
 from grape.common.log import initv, info
@@ -25,9 +26,9 @@ def getopts() -> argparse.Namespace:
     Process the command line options.
 
     Returns:
-       The argument namespace.
+       opts: The argument namespace.
     '''
-    argparse._ = args_get_text  # to capitalize help headers
+    argparse._ = args_get_text  # type: ignore
     base = os.path.basename(sys.argv[0])
     usage = '\n {0} [OPTIONS]'.format(base)
     desc = 'DESCRIPTION:{0}'.format('\n  '.join(__doc__.split('\n')))
@@ -64,12 +65,12 @@ VERSION:
 
 class Column:
     '''
-    The column.
+    A column in the status report.
     '''
     def __init__(self, name: str):
         self.m_name = name
         self.m_maxlen = len(name)
-        self.m_rows = []
+        self.m_rows : List[str] = []
 
     def add(self, value: str):
         '''
@@ -78,13 +79,13 @@ class Column:
         self.m_maxlen = max(self.m_maxlen, len(value))
         self.m_rows.append(value)
 
-    def size(self):
+    def size(self) -> int:
         '''
         Return the number of rows.
         '''
         return len(self.m_rows)
 
-    def get(self, i: int, prefix: str = '  '):
+    def get(self, i: int, prefix: str = '  ') -> str:
         '''
         Returns the formatted value for a row.
         '''
@@ -92,7 +93,7 @@ class Column:
         fmt = f'{prefix}{val:<{self.m_maxlen}}'
         return fmt
 
-    def hdr(self, prefix: str = '  '):
+    def hdr(self, prefix: str = '  ') -> str:
         '''
         Returns the formatted value for a row.
         '''
@@ -102,8 +103,13 @@ class Column:
 
 
 def get_elapsed_time(start_str: str) -> str:
-    '''
-    Get the elapsed time in seconds.
+    '''Get the elapsed time in seconds.
+
+    Args:
+        start_str: The container start timestamp.
+
+    Returns:
+        elapsed: The elapsed time as a string.
     '''
     start = dateutil.parser.parse(start_str)
     now = datetime.datetime.now(datetime.timezone.utc)
@@ -121,25 +127,36 @@ def get_elapsed_time(start_str: str) -> str:
     return fmt
 
 
-def main():
-    'main'
-    opts = getopts()
-    initv(opts.verbose)
-    info('status')
-    client = docker.from_env()
-    containers = client.containers.list(filters={'label': 'grape.type'})
+def get_continer_external_ports(container: docker.models.containers.Container) -> list:
+    '''Get the external ports associated with a container.
 
-    # Collect report rows for each column.
-    cols = {'created': Column('Created'),
-            'id': Column('Id'),
-            'elapsed': Column('Elapsed'),
-            'image': Column('Image'),
-            'name': Column('Name'),
-            'started': Column('Started'),
-            'status': Column('Status'),
-            'type': Column('Type'),
-            'version': Column('Version')}
+    Args:
+        container: The container object.
+
+    Returns:
+        list: A list of ports.
+    '''
+    # Add the ports.
+    ports = []
+    pobjs = container.attrs['HostConfig']['PortBindings']
+    for attrs in pobjs.values():
+        for attr in attrs:
+            if 'HostPort' in attr:
+                value = attr['HostPort']
+                ports.append(value)
+    return ports
+
+
+def populate_columns(containers: list, cols: dict):
+    '''Populate the columns with data from each container.
+
+    Args:
+        containers: The list of containers.
+        cols: This list of report columns.
+    '''
     for container in sorted(containers, key=lambda x: x.name.lower()):
+        ports = get_continer_external_ports(container)
+        cols['ports'].add(','.join(sorted(ports)))
         cols['created'].add(container.attrs['Created'])
         cols['id'].add(container.short_id)
         cols['image'].add(container.image.short_id)
@@ -156,8 +173,37 @@ def main():
             cols['started'].add('')
             cols['elapsed'].add('')
 
-    # Report the status.
-    colnames = ['name', 'type', 'version', 'status', 'started', 'elapsed', 'id', 'image', 'created']
+
+def main():
+    '''Status command main.
+
+    This is the command line entry point for the status command.
+
+    It list the statistics for all grape containers running on
+    the current system.
+    '''
+    opts = getopts()
+    initv(opts.verbose)
+    info('status')
+    client = docker.from_env()
+    containers = client.containers.list(filters={'label': 'grape.type'})
+
+    # Collect report rows for each column.
+    cols = {'created': Column('Created'),
+            'id': Column('Id'),
+            'elapsed': Column('Elapsed'),
+            'image': Column('Image'),
+            'name': Column('Name'),
+            'ports': Column('Port'),
+            'started': Column('Started'),
+            'status': Column('Status'),
+            'type': Column('Type'),
+            'version': Column('Version')}
+    populate_columns(containers, cols)
+
+    # Report the status for all of the containers.
+    colnames = ['name', 'type', 'version', 'status', 'started',
+                'elapsed', 'id', 'image', 'created', 'ports']
     ofp = sys.stdout
     if opts.verbose:
         if ofp == sys.stdout:

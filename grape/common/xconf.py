@@ -8,13 +8,17 @@ from grape.common.log import debug
 
 
 def get_xconf(ifn: str) -> dict:
-    '''
-    Import the YAML configuration that describes the external server.
+    '''Import the YAML configuration that describes the external
+    server.
+
+    This is used for importing from and exporting to external grafana
+    servers. It allows local work to be exported to an external
+    production server.
 
     Args:
-        ifn - The YAML file name
+        ifn: The YAML file name.
     Returns
-        The import conf.
+        xcond: The configuration that was read.
     '''
     with open(ifn) as ifp:
         iconf = yaml.load(ifp, Loader=yaml.FullLoader)

@@ -8,16 +8,19 @@ from grape.common.log import info, err, debug, warn
 
 
 def load(conf: dict, sql: str):
-    '''
-    Load the database data.
+    '''Load database data.
 
     This is done using psql in the container by copying
     the sql to the mnt directory that is mounted to the
     container.
 
+    Note that this could be used for much more than just
+    loading because it executes arbitrary SQL but loading
+    is its primary purpose.
+
     Args:
-        conf - the configuration
-        sql  - the SQL to update the database.
+        conf: The configuration data.
+        sql: The SQL commands used to update the database.
     '''
     dbname = conf['pg']['dbname']
     name = conf['pg']['name']
@@ -49,23 +52,22 @@ def load(conf: dict, sql: str):
             tcnt += 1
             warn(f'try {tcnt} of {tmax}\n' + exc.output.decode('utf-8'))
             if tcnt == tmax:
-                err(exc)
+                err(str(exc))
             time.sleep(5)
     debug(out.decode('utf-8'))
 
 
 def save(conf: dict) -> str:
-    '''
-    Read the database contents.
+    '''Save the database by reading the contents.
 
-    This is the same as a backup command and the only reasonable
-    way to do it is by using the pgdump command.
+    This is the same as a backup command and the only reasonable way
+    to do it is by using the pgdump command.
 
     Args:
-        conf - the configuration
+        conf: The configuration data.
 
-    Returns
-        the SQL to restore the database
+    Returns:
+        sql: The SQL to restore the database.
     '''
     info('reading the database')
     name = conf['pg']['name']
@@ -75,7 +77,7 @@ def save(conf: dict) -> str:
         info(cmd)
         out = subprocess.check_output(cmd, shell=True)
     except subprocess.CalledProcessError as exc:
-        warn(exc)
+        warn(str(exc))
         out = b'-- no pg docker container'
     sql = str(out.decode('utf-8'))
     info(f'read {len(sql)} bytes of sql for the database')

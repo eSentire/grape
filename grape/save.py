@@ -26,9 +26,9 @@ def getopts() -> argparse.Namespace:
     Process the command line options.
 
     Returns:
-       The argument namespace.
+       opts: The argument namespace.
     '''
-    argparse._ = args_get_text  # to capitalize help headers
+    argparse._ = args_get_text  # type: ignore
     base = os.path.basename(sys.argv[0])
     usage = '\n {0} [OPTIONS]'.format(base)
     desc = 'DESCRIPTION:{0}'.format('\n  '.join(__doc__.split('\n')))
@@ -86,11 +86,11 @@ def save_gr_read(conf: dict, service: str) -> dict:
     Read a single grafana service.
 
     Args:
-        conf - the configuration
-        service - the grafana REST service
+        conf: The configuration data.
+        service: The grafana REST service.
 
     Returns
-        the JSON from the URL request
+        response: The JSON from the URL request.
     '''
     port = conf['gr']['xport']
     auth = (conf['gr']['username'], conf['gr']['password'])
@@ -102,7 +102,7 @@ def save_gr_read(conf: dict, service: str) -> dict:
     try:
         response = requests.get(url, auth=auth, headers=headers)
     except requests.ConnectionError as exc:
-        err(exc)
+        err(str(exc))
     if response.status_code != 200:
         err(f'request to {url} failed with status {response.status_code}\n'
             f'{json.dumps(response.json(), indent=2)}')
@@ -115,10 +115,10 @@ def save_gr_all(conf: dict) -> dict:
     Read the grafana state from a local server and save it.
 
     Args:
-        conf - the configuration
+        conf: The configuration data.
 
-    Returns
-        the datasources, folders and dashboards
+    Returns:
+        state: The grafana datasources, folders and dashboards.
     '''
     info('reading grafana')
 
@@ -162,11 +162,12 @@ def save_gr_all(conf: dict) -> dict:
 
 
 def save(conf: dict):
-    '''
-    Save the database and grafana server state into an archive.
+    '''Save the grape project state.
+
+    Save the database and grafana server state into a zip archive.
 
     Args:
-        conf - the configuration
+        conf: The configuration.
     '''
     ofn = conf['file']
     if os.path.exists(ofn):
@@ -193,7 +194,10 @@ def save(conf: dict):
 
 
 def main():
-    'main'
+    '''Save command main.
+
+    This is the command line entry point for the save command.
+    '''
     opts = getopts()
     initv(opts.verbose)
     info(f'save {opts.base}')

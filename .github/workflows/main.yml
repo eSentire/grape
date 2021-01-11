@@ -2,8 +2,8 @@
 
 name: CI
 
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
+# Controls when the action will run. Triggers the workflow on push or
+# pull request events but only for the master branch
 on:
   push:
     branches: [master]
@@ -11,7 +11,8 @@ on:
     branches: [master]
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# A workflow run is made up of one or more jobs that can run
+# sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
   build:
@@ -21,33 +22,36 @@ jobs:
       matrix:
         os: [ubuntu-latest]
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    # Steps represent a sequence of tasks that will be executed as
+    # part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your
+      # job can access it
       - uses: actions/checkout@v2
 
-      - name: Set up Python 3.x
+      - name: 'Set up Python 3.x'
         uses: actions/setup-python@v2
         with:
-          # Semantic version range syntax or exact version of a Python version
+          # Semantic version range syntax or exact version of a Python
+          # version
           python-version: '3.8'
 
-      - name: Install pipenv
+      - name: 'Install pipenv'
         run: pip install pipenv
 
-      - name: Build and test
+      - name: 'Build and test'
         run: make
 
-      - name: Archive code coverage results
+      - name: 'Archive code coverage results'
         uses: actions/upload-artifact@v2
         with:
-          name: code-coverage-report
+          name: 'code-coverage-report'
           path: test/htmlcov
 
-      - name: Archive test results
+      - name: 'Archive test results'
         uses: actions/upload-artifact@v2
         with:
-          name: test-report
+          name: 'test-report'
           path: |
             test/report.html
             test/assets

@@ -10,7 +10,7 @@ import os
 import sys
 import time
 
-import docker
+import docker  # type: ignore
 
 from grape.common.args import DEFAULT_NAME, CLI, add_common_args, args_get_text
 from grape.common.log import initv, info, warn, err
@@ -25,7 +25,7 @@ def getopts() -> argparse.Namespace:
     Returns:
        opts: The argument namespace.
     '''
-    argparse._ = args_get_text  # to capitalize help headers
+    argparse._ = args_get_text  # type: ignore
     base = os.path.basename(sys.argv[0])
     usage = '\n {0} [OPTIONS]'.format(base)
     desc = 'DESCRIPTION:{0}'.format('\n  '.join(__doc__.split('\n')))
@@ -62,7 +62,7 @@ def create_start(kconf: dict):
     '''Create the start script.
 
     Args:
-        kconf: The configuration for a key.
+        kconf: The configuration data for a key.
     '''
     # Create the start script.
     name = kconf['name']
@@ -108,7 +108,8 @@ echo "started - it may take up to 30 seconds to initialize"
 
 
 def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-many-locals
-    '''
+    '''Initialize the containers.
+
     Wait for the containers to initialized by looking
     for messages in the logs.
 
@@ -116,7 +117,7 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
     faster than just doing a simple wait.
 
     Args:
-        conf: The configuration.
+        conf: The configuration data.
         waitval: The container create wait time in seconds.
     '''
     # This is a heuristic that does a short wait to give docker
@@ -134,8 +135,8 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
     # The values below are heuristic based on empirical observation of
     # the logs. They may have to change based on versions of docker.
     recs = [
-        {'key': 'gr', 'value': b'created default admin'},
-        {'key': 'pg', 'value': b'database system is ready to accept connections'},
+        {'key': 'gr', 'value': 'created default admin'},
+        {'key': 'pg', 'value': 'database system is ready to accept connections'},
     ]
 
     # Define the sleep interval.
@@ -165,7 +166,7 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
         i = 0
         while True:
             try:
-                logs = cobj.logs(tail=20)
+                logs = str(cobj.logs(tail=20))
                 if val in logs.lower():
                     elapsed = time.time() - start
                     info(f'container initialized: "{name}" after {elapsed:0.1f} seconds')
@@ -185,17 +186,16 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
                 err(f'container failed to initialize: "{name}"\nData: {logs}')
 
 
-def create_containers(conf: dict, waitval: float):
-    '''
-    Create the docker containers.
+def create_containers(conf: dict, wait: float):
+    '''Create the docker containers.
 
     Args:
-        conf: The configuration.
+        conf: The configuration data.
         wait: The container create wait time.
     '''
     create_start(conf['pg'])  # only needed for the database
     client = docker.from_env()
-    wait = 0
+    num = 0
     for key in ['gr', 'pg']:
         kconf = conf[key]
         cname = kconf['cname']
@@ -211,7 +211,7 @@ def create_containers(conf: dict, waitval: float):
                 os.makedirs(key1)
                 os.chmod(key1, 0o775)
             except FileExistsError as exc:
-                warn(exc)
+                warn(str(exc))
 
         ports = kconf['ports']
         info(f'creating container "{cname}": {ports}')
@@ -224,18 +224,17 @@ def create_containers(conf: dict, waitval: float):
                               ports=ports,
                               environment=kconf['env'],
                               volumes=kconf['vols'])
-        wait = waitval
+        num += 1
 
     if wait:
         create_container_init(conf, wait)
 
 
 def create(conf: dict, wait: float):
-    '''
-    Create the docker infrastructure.
+    '''Create the docker infrastructure.
 
     Args:
-        conf: The configuration.
+        conf: The configuration data.
         wait: The container create wait time.
     '''
     create_containers(conf, wait)
@@ -244,7 +243,10 @@ def create(conf: dict, wait: float):
 
 
 def main():
-    'main'
+    '''Create command main.
+
+    This is the command line entry point for the create command.
+    '''
     opts = getopts()
     initv(opts.verbose)
     info(f'creating {opts.base} based containers')

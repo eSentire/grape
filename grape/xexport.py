@@ -11,6 +11,7 @@ automatically because grafana does not export passwords.
 import argparse
 import os
 import sys
+from typing import Any, Dict
 
 from grape.common.args import DEFAULT_NAME, CLI, add_common_args, args_get_text
 from grape.common.log import initv, info
@@ -26,9 +27,9 @@ def getopts() -> argparse.Namespace:
     Process the command line options.
 
     Returns:
-       The argument namespace.
+       opts: The argument namespace.
     '''
-    argparse._ = args_get_text  # to capitalize help headers
+    argparse._ = args_get_text  # type: ignore
     base = os.path.basename(sys.argv[0])
     usage = '\n {0} [OPTIONS]'.format(base)
     desc = 'DESCRIPTION:{0}'.format('\n  '.join(__doc__.split('\n')))
@@ -70,8 +71,8 @@ def xexport(conf: dict, xconf: str):
     as well as a load zip file.
 
     Args:
-        conf - the configuration
-        xconf - the external conf
+        conf: The configuration data.
+        xconf: The external grafana configuration data.
     '''
     info('export')
 
@@ -79,7 +80,7 @@ def xexport(conf: dict, xconf: str):
     # Create a password map so that the passwords
     # for the databases can be restored.
     iconf = get_xconf(xconf)
-    pmap = {}
+    pmap : Dict[str, Any] = {}
     if 'databases' in iconf:
         for database in iconf['databases']:
             for key in database:
@@ -130,7 +131,10 @@ def xexport(conf: dict, xconf: str):
 
 
 def main():
-    'main'
+    '''Export command main.
+
+    This is the command line entry point for the export command.
+    '''
     opts = getopts()
     initv(opts.verbose)
     info(f'export using {opts.xconf}')

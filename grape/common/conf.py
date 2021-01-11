@@ -4,26 +4,32 @@ The conf data for all tools.
 import datetime
 import json
 import os
+from typing import Any, Dict
 
 from grape.common.log import debug
 from grape import __version__
 
 
-def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> dict:
-    '''
-    Get the configuration used by all tools.
+def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> Dict[str, Any]:
+    '''Get the grape project configuration data used by all tools.
+
+    This is used by each of the commands and is customized by
+    command line argument settings.
 
     Args:
-        bname - the base name (from -n)
-        fname - the file name (from -f)
-        grxport - the external grafana port (from -g)
-        pgxport - the external database port (from -p)
+        bname: The base name (from -n).
+        fname: The file name (from -f).
+        grxport: The external grafana port (from -g).
+        pgxport: The external database port (from -p).
+
+    Returns:
+        conf: The configuration dictionary.
     '''
     grname = bname + 'gr'
     pgname = bname + 'pg'
     pgpath_share = os.path.join(os.getcwd(), pgname)
     pgpath_mnt = os.path.join(pgpath_share, 'mnt')
-    conf = {
+    conf : Dict[str, Any] = {
         'timestamp': datetime.datetime.utcnow().isoformat(timespec='seconds'),
         'version': __version__,
         'base': bname,

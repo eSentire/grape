@@ -3,21 +3,23 @@ Common grafana utilities.
 '''
 import json
 from functools import reduce
-import docker
+from typing import List
+import docker  # type: ignore
 import requests
 from grape.common.log import info, err
 
 
 def getpgip(conf: dict) -> str:
-    '''
-    Special handling to "fix" the url.
-    Get the correct internal IP address.
+    '''Get the correct internal IP address for the pg container.
+
+    Special handling to "fix" the url by reading the data from the
+    docker container and to get the correct internal IP address.
 
     Args:
-        conf - the configuration
+        conf: The configuration data.
 
-    Returns
-        The corrected IP address for the pg container.
+    Returns:
+        ipa: The corrected IP address for the pg container.
     '''
     name = conf['gr']['cname']
     client = docker.from_env()
@@ -34,12 +36,14 @@ def getpgip(conf: dict) -> str:
 
 
 def load_datasources(conf: dict, recs: list):
-    '''
-    Load the grafana datasources.
+    '''Load the datasources up to the grafana server.
+
+    This sets (loads) the datasources in the grafana server by sending
+    the datasource configuration data through the REST API.
 
     Args:
-        conf - the configuration
-        recs - the grafana setup data for datasources.
+        conf: The configuration data.
+        recs: The grafana setup data for datasources.
     '''
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json'}
@@ -80,19 +84,21 @@ def load_datasources(conf: dict, recs: list):
                                      auth=auth,
                                      headers=headers)
         except requests.ConnectionError as exc:
-            err(exc)
+            err(str(exc))
         info(f'response status: {response.status_code} from {url}')
         if response.status_code not in (200, 409):
             err(f'upload failed with status {response.status_code} to {url}')
 
 
 def load_folders(conf: dict, recs: list):
-    '''
-    Load the grafana folders.
+    '''Load the folders up to the grafana server.
+
+    This sets (loads) the folders on the grafana server by sending the
+    folder configuration data through the REST API.
 
     Args:
-        conf - the configuration
-        recs - the grafana setup data for folders.
+        conf: The configuration data.
+        recs: The grafana setup data for folders.
     '''
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json'}
@@ -108,24 +114,23 @@ def load_folders(conf: dict, recs: list):
                                      auth=auth,
                                      headers=headers)
         except requests.ConnectionError as exc:
-            err(exc)
+            err(str(exc))
         info(f'response status: {response.status_code} from {url}')
         if response.status_code not in (200, 412, 500):
             err(f'upload failed with status {response.status_code} to {url}')
 
 
 def load_fmap(conf: dict, recs: list) -> dict:
-    '''
-    Map the grafana folders from the old ids to the new ones.
+    '''Map the grafana folders from the old ids to the new ones.
 
     This must be done after the new folders have been uploaded.
 
     Args:
-        conf - the configuration
-        recs - the grafana setup data for folders.
+        conf: The configuration data.
+        recs: The grafana setup data for folders.
 
     Returns:
-        The folder map.
+        map: The folder map with the correct ids.
     '''
     fmapn = {}
     for rec in recs:  # old folders
@@ -144,7 +149,7 @@ def load_fmap(conf: dict, recs: list) -> dict:
                                 auth=auth,
                                 headers=headers)
     except requests.ConnectionError as exc:
-        err(exc)
+        err(str(exc))
     if response.status_code != 200:
         err(f'download failed with status {response.status_code} to {url}')
     folders = response.json()  # these are the new folders
@@ -166,13 +171,15 @@ def load_fmap(conf: dict, recs: list) -> dict:
 
 
 def load_dashboards(conf: dict, recs: list, fmap: dict):
-    '''
-    Load the grafana dashboards.
+    '''Load the dashboards up to the grafana server.
+
+    This sets (loads) the dashboards on the grafana server by sending
+    the folder configuration data through the REST API.
 
     Args:
-        conf - the configuration
-        recs - the grafana setup data for dashboards.
-        fmap - folder/title map
+        conf: The configuration data.
+        recs: The grafana setup data for dashboards.
+        fmap: The folder/title id map.
     '''
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json'}
@@ -194,19 +201,18 @@ def load_dashboards(conf: dict, recs: list, fmap: dict):
                                      auth=auth,
                                      headers=headers)
         except requests.ConnectionError as exc:
-            err(exc)
+            err(str(exc))
         info(f'response status: {response.status_code} from {url}')
         if response.status_code not in (200, 400, 412):
             err(f'upload failed with status {response.status_code} to {url}')
 
 
 def load_all(conf: dict, zgr: dict):
-    '''
-    Load the grafana setup.
+    '''Load the zip conf data up to the grafana server.
 
     Args:
-        conf - the configuration
-        zgr - the grafana setup.
+        conf: The configuration data.
+        zgr: Zip file that contains the grafana setup data.
     '''
     load_datasources(conf, zgr['datasources'])
     load_folders(conf, zgr['folders'])
@@ -216,16 +222,15 @@ def load_all(conf: dict, zgr: dict):
 
 
 def read_service(burl: str, auth: tuple, service: str) -> dict:
-    '''
-    Read a single grafana service.
+    '''Read data for a single grafana service.
 
     Args:
-        burl - the base URL
-        auth - the auth tuple
-        service - the grafana REST service
+        burl: The base URL for the service.
+        auth: The auth tuple.
+        service: The grafana REST service.
 
-    Returns
-        the JSON from the URL request
+    Returns:
+        response: The JSON from the URL request.
     '''
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json'}
@@ -234,7 +239,7 @@ def read_service(burl: str, auth: tuple, service: str) -> dict:
     try:
         response = requests.get(url, auth=auth, headers=headers)
     except requests.ConnectionError as exc:
-        err(exc)
+        err(str(exc))
     if response.status_code != 200:
         err(f'request to {url} failed with status {response.status_code}\n'
             f'{json.dumps(response.json(), indent=2)}')
@@ -243,15 +248,17 @@ def read_service(burl: str, auth: tuple, service: str) -> dict:
 
 
 def read_all_services(burl: str, auth: tuple) -> dict:
-    '''
-    Read the grafana state from an external server and save it.
+    '''Read the complete grafana state from an external server and
+    save it.
+
+    The services are the datasourceds, folders and dashboards.
 
     Args:
-        burl - the base URL
-        auth - the auth tuple
+        burl: The base URL.
+        auth: The auth tuple.
 
-    Returns
-        the datasources, folders and dashboards
+    Returns:
+        state: The datasources, folders and dashboards.
     '''
     info('reading grafana')
 
@@ -261,9 +268,9 @@ def read_all_services(burl: str, auth: tuple) -> dict:
     # Read the folders.
     folders = read_service(burl, auth, 'api/folders?limit=100')
     info(f'read {len(folders)} folders')
-    fids = reduce(lambda x, y: x+[y] if not y in x else x,
-                  [fid['id'] for fid in folders],
-                  [])
+    fids : List[int] = reduce(lambda x, y: x+[y] if not y in x else x,
+                              [fid['id'] for fid in folders],
+                              [])
     if not fids:
         # The General folder always exists.
         fids = [0]

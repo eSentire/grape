@@ -34,8 +34,9 @@ LEVEL = logging.WARNING
 
 
 def initv(verbose: int):
-    '''
-    Initialize the logger based on the level of verbosity:
+    '''Initialize the logger based on the level of verbosity.
+
+    It maps the CLI verbosity to logging levels.
 
         0 - logging.WARNING
         1 - logging.INFO
@@ -44,7 +45,7 @@ def initv(verbose: int):
     This is used by each of the apps rather than init().
 
     Args:
-        verbose - the level of verbosity: [0..2]
+        verbose: The level of verbosity: [0..2].
     '''
     if verbose == 0:
         init(logging.WARNING)
@@ -62,11 +63,10 @@ def initv(verbose: int):
 
 # Initialize.
 def init(level: int):
-    '''
-    Initialize the logger.
+    '''Initialize the logger.
 
     Args:
-        level - The log level: logging.INFO, etc.
+        level: The log level: logging.INFO, etc.
     '''
     global LOG, LEVEL  # pylint: disable=global-statement
     if not LOG is None:
@@ -85,8 +85,9 @@ def init(level: int):
 
 
 def extra() -> dict:
-    '''
-    Define the extra for coloring.
+    '''Define the extra for coloring.
+
+    This allows color to be introduced to the standard logger.
     '''
     assert LOG is not None
     caller = inspect.stack()[1].function
@@ -100,13 +101,16 @@ def extra() -> dict:
 
 
 def info(msg: str, level: int = 1):
-    '''
-    Print an info message.
+    '''Print an info message.
+
+    Info messages will be invisible unless the
+    logging level includes logging.INFO.
 
     Args:
-        msg - the message
-        level - the stack level (default: parent)
+        msg: The message.
+        level: The stack level (default: parent).
     '''
+    assert LOG  # make sure LOG is initialized
     try:
         LOG.info(msg, stacklevel=level+1, extra=extra())
     except ValueError:  # recover from pylint IO issue
@@ -115,13 +119,13 @@ def info(msg: str, level: int = 1):
 
 
 def warn(msg: str, level: int = 1):
-    '''
-    Print a warning message.
+    '''Print a warning message.
 
     Args:
-        msg - the message
-        level - the stack level (default: parent)
+        msg: The message.
+        level: The stack level (default: parent).
     '''
+    assert LOG  # make sure LOG is initialized
     try:
         LOG.warning(msg, stacklevel=level+1, extra=extra())
     except ValueError:  # recover from pylint IO issue
@@ -130,14 +134,16 @@ def warn(msg: str, level: int = 1):
 
 
 def debug(msg: str, level: int = 1):
-    '''
-    Print a debug message.
-    Can't name it debug because that is reserved.
+    '''Print a debug message.
+
+    Debug messages will be invisible unless the
+    logging level includes logging.DEBUG.
 
     Args:
-        msg - the message
-        level - the stack level (default: parent)
+        msg: The message.
+        level: The stack level (default: parent).
     '''
+    assert LOG  # make sure LOG is initialized
     try:
         LOG.debug(msg, stacklevel=level+1, extra=extra())
     except ValueError:  # recover from pylint IO issue
@@ -145,15 +151,17 @@ def debug(msg: str, level: int = 1):
         LOG.debug(msg, stacklevel=level+1, extra=extra())
 
 
-def err(msg: str, level: int = 1, xflag=True):
+def err(msg: str, level: int = 1, xflag : bool = True, xcode : int = 1):
     '''
     Print an error message and exit
 
     Args:
-        msg - the message
-        level - the stack level (default: parent)
-        xflag - if true, exit
+        msg: The message.
+        level: The stack level (default: parent).
+        xflag: If true, exit. The default is to exit.
+        xcode: The exit code. The default is 1.
     '''
+    assert LOG  # make sure LOG is initialized
     try:
         LOG.error(msg, stacklevel=level+1, extra=extra())
     except ValueError:  # recover from pylint IO issue
@@ -161,4 +169,4 @@ def err(msg: str, level: int = 1, xflag=True):
         LOG.error(msg, stacklevel=level+1, extra=extra())
     if xflag:
         logging.shutdown()
-        sys.exit(1)
+        sys.exit(xcode)
