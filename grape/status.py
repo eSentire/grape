@@ -109,7 +109,7 @@ def get_elapsed_time(start_str: str) -> str:
         start_str: The container start timestamp.
 
     Returns:
-        exlapsed: The elapsed time as a string.
+        elapsed: The elapsed time as a string.
     '''
     start = dateutil.parser.parse(start_str)
     now = datetime.datetime.now(datetime.timezone.utc)
