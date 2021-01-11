@@ -126,6 +126,27 @@ def get_elapsed_time(start_str: str) -> str:
         fmt = f'{days[0]} days, ' + fmt
     return fmt
 
+
+def get_continer_external_ports(container: docker.models.containers.Container) -> list:
+    '''Get the external ports associated with a container.
+
+    Args:
+        container: The container object.
+
+    Returns:
+        list: A list of ports.
+    '''
+    # Add the ports.
+    ports = []
+    pobjs = container.attrs['HostConfig']['PortBindings']
+    for attrs in pobjs.values():
+        for attr in attrs:
+            if 'HostPort' in attr:
+                value = attr['HostPort']
+                ports.append(value)
+    return ports
+
+
 def populate_columns(containers: list, cols: dict):
     '''Populate the columns with data from each container.
 
@@ -134,6 +155,8 @@ def populate_columns(containers: list, cols: dict):
         cols: This list of report columns.
     '''
     for container in sorted(containers, key=lambda x: x.name.lower()):
+        ports = get_continer_external_ports(container)
+        cols['ports'].add(','.join(sorted(ports)))
         cols['created'].add(container.attrs['Created'])
         cols['id'].add(container.short_id)
         cols['image'].add(container.image.short_id)
@@ -149,17 +172,6 @@ def populate_columns(containers: list, cols: dict):
         else:
             cols['started'].add('')
             cols['elapsed'].add('')
-
-        # Add the ports.
-        ports = []
-        pobjs = container.attrs['HostConfig']['PortBindings']
-        for attrs in pobjs.values():
-            for attr in attrs:
-                if 'HostPort' in attr:
-                    value = attr['HostPort']
-                    ports.append(value)
-        pstr = ','.join(sorted(ports))
-        cols['ports'].add(pstr)
 
 
 def main():
