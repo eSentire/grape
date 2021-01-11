@@ -151,7 +151,7 @@ def debug(msg: str, level: int = 1):
         LOG.debug(msg, stacklevel=level+1, extra=extra())
 
 
-def err(msg: str, level: int = 1, xflag=True, xcode=1):
+def err(msg: str, level: int = 1, xflag : bool = True, xcode : int = 1):
     '''
     Print an error message and exit
 
