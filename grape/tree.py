@@ -146,14 +146,14 @@ class TreeNode:
 
         # Write out the node.
         prefix = ''.join(reversed(prefixes))
+        if self.parent:
+            prefix += ' '
         return prefix
 
     def dump(self, level: int=0, ofp: TextIO = sys.stdout, indent: int=3):
         'dump the tree'
         prefix = self.prefix(indent)
         ofp.write(prefix)
-        if level:
-            ofp.write(' ')
         ofp.write(self.value)
         ofp.write('\n')
 
