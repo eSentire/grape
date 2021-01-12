@@ -466,10 +466,6 @@ def test_run_tree(capsys: Any, name: str, gport: int):
     debug(f'out=[{len(out)}]<<<{out}>>>')
     debug(f'err=[{len(err)}]<<<{err}>>>')
 
-    # This did NOT work. I am not sure why.
-    # The out buffer was empty!
-    # At some point in the future i need to figure this out.
-    # For now, the report is read from a file.
     with open(rfile) as ifp:
         out = ifp.read()
         debug(f'out=[{len(out)}]<<<{out}>>>')
@@ -481,6 +477,23 @@ def test_run_tree(capsys: Any, name: str, gport: int):
     assert ':1:postgres' in out  # make sure that the database is there
     os.unlink(rfile)  # delete the report log
 
+    # Positive test #2 (sort)
+    sys.argv = [fct, '-g', str(gport), '-f', rfile, '--sort']
+    tree.main()
+    out, err = capsys.readouterr()
+    debug(f'out=[{len(out)}]<<<{out}>>>')
+    debug(f'err=[{len(err)}]<<<{err}>>>')
+
+    with open(rfile) as ifp:
+        out = ifp.read()
+        debug(f'out=[{len(out)}]<<<{out}>>>')
+    key = namegr + ':' + str(gport)
+    assert ' datasources' in out
+    assert ' folders' in out
+    assert namepg in out
+    assert key in out  # grape_test1gr:4700
+    assert ':1:postgres' in out  # make sure that the database is there
+    os.unlink(rfile)  # delete the report log
 
 @pytest.mark.depends(on=['test_run_tree'])
 @pytest.mark.parametrize(
