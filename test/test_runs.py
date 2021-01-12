@@ -458,7 +458,6 @@ def test_run_tree(capsys: Any, name: str, gport: int):
     assert exc.value.code
 
     # Positive test.
-    # These commands did not cause stdout to be captured.
     rfile = fct + '.log'
     sys.argv = [fct, '-g', str(gport), '-f', rfile]
     tree.main()
