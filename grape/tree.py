@@ -12,7 +12,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from typing import List, Optional, TextIO, Tuple
+from typing import Any, Callable, Iterable, List, Optional, TextIO, Tuple
 
 import docker  # type: ignore
 from docker.models.containers import Container  # type: ignore
@@ -24,13 +24,42 @@ from grape.common.conf import DEFAULT_AUTH
 from grape import __version__
 
 
-class TreeNode:
+class TreeReportNode:
     '''Report tree nodes.
 
-    The tree structure is used for the reporting the data in tree
+    The tree structure is used for the reporting data in tree
     format.
+
+    You use it by first constructing a tree like this:
+        top = TreeReportNode('top')
+        node1 = TreeReportNode('node:1', top)
+        node2 = TreeReportNode('node:2', top)
+        node11 = TreeReportNode('node:1.1', node1)
+        node12 = TreeReportNode('node:1.2', node1)
+        node21 = TreeReportNode('node:1.1', node2)
+        node22 = TreeReportNode('node:1.2', node2)
+
+    Once the tree is constructed, you generate the tree report
+    like this:
+        for prefix, value in top.walk():
+            print(f'{prefix}{value}')
+
+    The output will look like this:
+        top
+          ├─ node:1
+          │   ├─ node:1.1
+          │   └─ node:1.2
+          └─ node:2
+              ├─ node:2.1
+              └─ node:2.2
+
+    You can also sort the output:
+        for prefix, value in top.sort().walk():
+            print(f'{prefix}{value}')
+
+    It can accept any type of data.
     '''
-    def __init__(self, value: str, parent : Optional[TreeNode] = None):
+    def __init__(self, value: Any, parent : Optional[TreeReportNode] = None):
         '''Create a node.
 
         This is the only way to add a node to the tree.
@@ -48,8 +77,8 @@ class TreeNode:
             node: A tree node object.
         '''
         self._value = value
-        self._children : List[TreeNode] = []
-        self._parent : Optional[TreeNode] = parent
+        self._children : List[TreeReportNode] = []
+        self._parent : Optional[TreeReportNode] = parent
         self._islast = True
         if parent:
             parent._children.append(self)
@@ -57,17 +86,17 @@ class TreeNode:
                 parent._children[-2]._islast = False
 
     @property
-    def value(self) -> str:
+    def value(self) -> Any:
         'value'
         return self._value
 
     @property
-    def parent(self) -> Optional[TreeNode]:
+    def parent(self) -> Optional[TreeReportNode]:
         'parent'
         return self._parent
 
     @property
-    def children(self) -> List[TreeNode]:
+    def children(self) -> List[TreeReportNode]:
         'children'
         return self._children
 
@@ -76,40 +105,52 @@ class TreeNode:
         'is this the last child?'
         return self._islast
 
-    def get(self, value: str) -> Optional[TreeNode]:
-        'get child by name'
-        for child in self._children:
-            if child.value == value:
-                return child
-        return None
+    def sort(self, scmp: Callable[[Any], str] = lambda x: str(x.value).lower()) -> TreeReportNode:
+        '''Sort in place.
 
-    def sort(self) -> TreeNode:
-        'sort in place'
+        Args:
+            scmp: Sort comparator.
+
+        Usage:
+            def sortit(root: TreeReportNode):
+                'sorter'
+                fct = lambda x: str(x.value).lower()
+                root.sort(fct)
+        '''
         if self._children:
-            self._children = sorted(self._children, key=lambda x: x.value.lower())
+            self._children = sorted(self._children, key=scmp)
             for child in self._children:
                 child.sort()
                 child._islast = False  # pylint: disable=protected-access
             self._children[-1]._islast = True  # pylint: disable=protected-access
         return self
 
-    def __lt__(self, other: TreeNode) -> bool:
-        'compare lt'
+    def __lt__(self, other: TreeReportNode) -> bool:
+        'compare lt for sort'
         return self._value < other._value
 
     def __eq__(self, other: object) -> bool:
-        'compare eq'
-        if isinstance(other, TreeNode):
+        'compare eq for sort'
+        if isinstance(other, TreeReportNode):
             return self._value == other._value
         return False
 
     def __str__(self) -> str:
         'sortable'
-        sortable = self._value + ','.join([x._value for x in self._children])
+        sortable = str(self._value) + ','.join([str(x._value) for x in self._children])
         return sortable
 
     def prefix(self, indent: int=3) -> str:
-        'get the indent prefix'
+        '''Define the prefix for the tree report.
+
+        This is used by the walk() generator.
+
+        Args:
+            indent: The indentation level for the report.
+
+        Returns:
+            prefix: The prefix as a string.
+        '''
         prefixes = []
         if self.parent:
             left = ''
@@ -150,16 +191,27 @@ class TreeNode:
             prefix += ' '
         return prefix
 
-    def dump(self, level: int=0, ofp: TextIO = sys.stdout, indent: int=3):
-        'dump the tree'
-        prefix = self.prefix(indent)
-        ofp.write(prefix)
-        ofp.write(self.value)
-        ofp.write('\n')
+    def walk(self, indent: int=3, level: int=0) -> Iterable[Tuple[str, str]]:
+        '''Generator that walks over the tree.
 
-        # Process the children.
+        Args:
+            indent: The indentation level for the report.
+            level: The recursion depth.
+
+        Returns:
+            prefix: The prefix.
+            value: The value.
+
+        Usage:
+            def print_tree(tree: TreeReportNode):
+                'print the tree'
+                for prefix, value in tree.walk():
+                    print(f'{prefix}{str(value)}')
+        '''
+        prefix : str = self.prefix(indent)
+        yield prefix, self.value
         for child in self._children:
-            child.dump(level+1, ofp, indent)
+            yield from child.walk(indent, level+1)
 
 
 def getopts() -> argparse.Namespace:
@@ -207,41 +259,46 @@ VERSION:
 Indent level.
 Default is %(default)s.
  ''')
+    parser.add_argument('--sort',
+                        action='store_true',
+                        help='''\
+Sort the tree data.
+ ''')
     add_common_args(parser)
     opts = parser.parse_args()
     return opts
 
 
-def collect_datasources(root: TreeNode, services: dict):
+def collect_datasources(root: TreeReportNode, services: dict):
     '''Collect the datasources nodes.
 
     Args:
         root: The root of the display tree.
         services: The dictionary of services.
     '''
-    datasources = TreeNode('datasources', root)
+    datasources = TreeReportNode('datasources', root)
     for obj in services['datasources']:
         name = obj['name']
         did = obj['id']
         dtype = obj['type']
-        key = f'{name}:{did}:{dtype}'
-        TreeNode(key, datasources)
+        key = f'{name}:id={did}:type={dtype}'
+        TreeReportNode(key, datasources)
 
 
-def collect_folders(root: TreeNode, services: dict):
+def collect_folders(root: TreeReportNode, services: dict):
     '''Collect the folder nodes.
 
     Args:
         root: The root of the display tree.
         services: The dictionary of services.
     '''
-    folders = TreeNode('folders', root)
+    folders = TreeReportNode('folders', root)
     for obj in services['folders']:
         title = obj['title']
         fid = obj['id']
-        key = f'{title}:{fid}'
-        folder = TreeNode(key, folders)
-        dashboards = TreeNode('dashboards', folder)
+        key = f'{title}:id={fid}'
+        folder = TreeReportNode(key, folders)
+        dashboards = TreeReportNode('dashboards', folder)
         for dashboard in services['dashboards']:
             #print(json.dumps(dashboard, indent=4))
             assert 'dashboard' in dashboard
@@ -256,10 +313,10 @@ def collect_folders(root: TreeNode, services: dict):
             uid = dash['uid']
             num = len(dash['panels'])
             key = f'{title}:id={did}:uid={uid}:panels={num}'
-            TreeNode(key, dashboards)
+            TreeReportNode(key, dashboards)
 
 
-def collect(burl: str, auth: Tuple[str, str], name: str) -> TreeNode:
+def collect(burl: str, auth: Tuple[str, str], name: str) -> TreeReportNode:
     '''List the grafana structure.
 
     Args:
@@ -271,7 +328,7 @@ def collect(burl: str, auth: Tuple[str, str], name: str) -> TreeNode:
         tree: The root of the display tree.
     '''
     services = read_all_services(burl, auth)
-    root = TreeNode(name)
+    root = TreeReportNode(name)
     collect_datasources(root, services)
     collect_folders(root, services)
     return root
@@ -324,6 +381,22 @@ def check_port(port: int) -> Container:  # pylint: disable=inconsistent-return-s
         'try running "pipenv run grape status -v"')
 
 
+def print_tree(opts: argparse.Namespace, ofp: TextIO, top: TreeReportNode):
+    '''Print out the tree view.
+
+    Args:
+        opts: The command line options.
+        ofp: The output file pointer.
+        top: The root node of the tree.
+    '''
+    if opts.sort:
+        top.sort()
+    for prefix, value in top.walk(opts.indent):
+        ofp.write(prefix)
+        ofp.write(value)
+        ofp.write('\n')
+
+
 def main():
     '''Tree command main.
 
@@ -340,6 +413,6 @@ def main():
     top = collect(burl, DEFAULT_AUTH, name)
     if opts.fname:
         with open(opts.fname, 'w') as ofp:
-            top.sort().dump(ofp=ofp, indent=opts.indent)
+            print_tree(opts, ofp, top)
     else:
-        top.sort().dump(ofp=sys.stdout, indent=opts.indent)
+        print_tree(opts, sys.stdout, top)
