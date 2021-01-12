@@ -108,7 +108,7 @@ class TreeNode:
         sortable = self._value + ','.join([x._value for x in self._children])
         return sortable
 
-    def dump(self, level: int=0, ofp: TextIO = sys.stdout, indent=3):
+    def dump(self, level: int=0, ofp: TextIO = sys.stdout, indent: int=3):
         'dump the tree'
         prefixes = []
         if self.parent:
