@@ -342,8 +342,8 @@ def main():
     burl = f'http://127.0.0.1:{opts.grxport}'
     name = container.name + ':' + str(opts.grxport)
     top = collect(burl, DEFAULT_AUTH, name)
-    top.sort().dump(indent=opts.indent)
-
-
-if __name__ == '__main__':
-    main()
+    if opts.fname:
+        with open(opts.fname, 'w') as ofp:
+            top.sort().dump(ofp=ofp, indent=opts.indent)
+    else:
+        top.sort().dump(ofp=sys.stdout, indent=opts.indent)
