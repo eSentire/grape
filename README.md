@@ -18,6 +18,7 @@ Grafana Prototyping Environment
 1. [Import](#import)
 1. [Export](#export)
 1. [Status](#status)
+1. [Tree](#tree)
 1. [Samples](#samples)
    1. [demo01](#demo01)
    1. [demo02](#demo02)
@@ -292,14 +293,34 @@ Generate a status report of all docker containers associated with
 grape.
 ```bash
 $ grape status -v
-INFO 2020-09-21 13:27:37,755 status.py:122 - status
-  Name      Type  Version  Status   Started                       Elapsed   Id          Image              Created
-  importgr  gr    0.4.0    running  2020-09-21T19:11:38.9520246Z  01:15:58  97dc4b113b  sha256:9ad3ce931a  2020-09-21T19:11:38.6148423Z
-  importpg  pg    0.4.0    running  2020-09-21T19:11:39.4823737Z  01:15:58  2c61e6db0f  sha256:0b0b68fee3  2020-09-21T19:11:38.9811611Z
-  proto1gr  gr    0.4.0    running  2020-09-21T19:10:52.0664005Z  01:16:45  3e3af49442  sha256:9ad3ce931a  2020-09-21T19:10:51.7615459Z
-  proto1pg  pg    0.4.0    running  2020-09-21T19:10:52.462019Z   01:16:45  7e72e9d0db  sha256:0b0b68fee3  2020-09-21T19:10:52.0829656Z
-INFO 2020-09-21 13:27:37,826 status.py:170 - done
+INFO 2021-01-11 16:36:14,134 status.py:187 - status
+  Name           Type  Version  Status   Started                         Elapsed   Id          Image              Created                         Port
+  grape_test1gr  gr    0.4.3    running  2021-01-12T00:34:48.618074371Z  00:01:25  f85986a629  sha256:9ad3ce931a  2021-01-12T00:34:48.259793436Z  4700
+  grape_test1pg  pg    0.4.3    running  2021-01-12T00:34:49.13129136Z   00:01:25  28e4372c1b  sha256:0b0b68fee3  2021-01-12T00:34:48.673554391Z  4701
+  grape_test2gr  gr    0.4.3    running  2021-01-12T00:35:11.212822109Z  00:01:02  632389a8d8  sha256:9ad3ce931a  2021-01-12T00:35:10.865475598Z  4710
+  grape_test2pg  pg    0.4.3    running  2021-01-12T00:35:11.692884845Z  00:01:02  65b9b2186b  sha256:0b0b68fee3  2021-01-12T00:35:11.256244428Z  4711
+  jbhgr          gr    0.4.3    running  2021-01-11T16:47:24.427558155Z  07:48:49  5368be647f  sha256:9ad3ce931a  2021-01-11T16:47:24.099948853Z  4640
+  jbhpg          pg    0.4.3    running  2021-01-11T16:47:24.907664979Z  07:48:49  7cf96782d7  sha256:0b0b68fee3  2021-01-11T16:47:24.459861004Z  4641
+INFO 2021-01-11 16:36:14,221 status.py:222 - done
 ```
+
+
+### Tree
+Generate a tree view of a grape grafana server datasources, folders and dashboards.
+```bash
+$ pipenv run grape tree -g 4640
+jbhgr:4640
+  ├─ datasources
+  │   └─ jbhpg:1:postgres
+  └─ folders
+      ├─ JBH:1
+      │   └─ dashboards
+      │       ├─ Northstar Dashboard Mock:id=5:uid=lC0QCuaMz:panels=33
+      │       └─ OKR Initiatives Health:id=6:uid=peAwjuaMk:panels=6
+      └─ Northstar:2
+          └─ dashboards
+              ├─ Jenkins Build Health Details:id=4:uid=ir0QjX-Mz:panels=9
+              └─ Jenkins Build Health:id=3:uid=6Q0QCuaGk:panels=70```
 
 
 ### Samples
