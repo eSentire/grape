@@ -108,8 +108,8 @@ class TreeNode:
         sortable = self._value + ','.join([x._value for x in self._children])
         return sortable
 
-    def dump(self, level: int=0, ofp: TextIO = sys.stdout, indent: int=3):
-        'dump the tree'
+    def prefix(self, indent: int=3) -> str:
+        'get the indent prefix'
         prefixes = []
         if self.parent:
             left = ''
@@ -146,8 +146,13 @@ class TreeNode:
 
         # Write out the node.
         prefix = ''.join(reversed(prefixes))
+        return prefix
+
+    def dump(self, level: int=0, ofp: TextIO = sys.stdout, indent: int=3):
+        'dump the tree'
+        prefix = self.prefix(indent)
         ofp.write(prefix)
-        if prefixes:
+        if level:
             ofp.write(' ')
         ofp.write(self.value)
         ofp.write('\n')
