@@ -28,6 +28,7 @@ from grape import load
 from grape import ximport
 from grape import xexport
 from grape import status
+from grape import tree
 
 
 GPORT = 4700
@@ -35,6 +36,20 @@ NAME = 'grape_test1'
 
 GPORT2 = 4710
 NAME2 = 'grape_test2'
+
+
+def debug(msg: str, level: int = 1):
+    '''
+    Print a debug message with context.
+
+    Args:
+        msg: The message string.
+        level: The stack level. Default is the caller.
+    '''
+    lnum = inspect.stack()[level].lineno
+    fname = inspect.stack()[level].filename
+    base = os.path.basename(fname)
+    print(f'\x1b[35mDEBUG:{base}:{lnum}: {msg}\x1b[0m\n')
 
 
 def make_yaml_file(path: str, gport: int):
@@ -87,9 +102,9 @@ def test_run_cli(capsys: Any):
     with pytest.raises(SystemExit) as exc:
         cli.main()
     out, err = capsys.readouterr()
-    print(f'cmd=<<<{sys.argv}>>>')
-    print(f'out=<<<{out}>>>')
-    print(f'err=<<<{err}>>>')
+    debug(f'cmd=<<<{sys.argv}>>>')
+    debug(f'out=[{len(out)}]<<<{out}>>>')
+    debug(f'err=[{len(err)}]<<<{err}>>>')
     assert exc.type == SystemExit
     assert exc.value.code == 0
 
@@ -99,9 +114,9 @@ def test_run_cli(capsys: Any):
         with pytest.raises(SystemExit) as exc:
             cli.main()
         out, err = capsys.readouterr()
-        print(f'cmd=<<<{sys.argv}>>>')
-        print(f'out=<<<{out}>>>')
-        print(f'err=<<<{err}>>>')
+        debug(f'cmd=[{len(cmd)}]<<<{cmd}>>>')
+        debug(f'out=[{len(out)}]<<<{out}>>>')
+        debug(f'err=[{len(err)}]<<<{err}>>>')
         assert exc.type == SystemExit
         assert exc.value.code == 0
 
@@ -112,9 +127,9 @@ def test_run_cli(capsys: Any):
             with pytest.raises(SystemExit) as exc:
                 cli.main()
             out, err = capsys.readouterr()
-            print(f'cmd=<<<{sys.argv}>>>')
-            print(f'out=<<<{out}>>>')
-            print(f'err=<<<{err}>>>')
+            debug(f'cmd=[{len(cmd)}]<<<{cmd}>>>')
+            debug(f'out=[{len(out)}]<<<{out}>>>')
+            debug(f'err=[{len(err)}]<<<{err}>>>')
             assert exc.type == SystemExit
             assert exc.value.code == 0
 
@@ -124,9 +139,9 @@ def test_run_cli(capsys: Any):
         with pytest.raises(SystemExit) as exc:
             cli.main()
         out, err = capsys.readouterr()
-        print(f'cmd=<<<{sys.argv}>>>')
-        print(f'out=<<<{out}>>>')
-        print(f'err=<<<{err}>>>')
+        debug(f'cmd=[{len(cmd)}]<<<{cmd}>>>')
+        debug(f'out=[{len(out)}]<<<{out}>>>')
+        debug(f'err=[{len(err)}]<<<{err}>>>')
         assert exc.type == SystemExit
         assert exc.value.code == 0
 
@@ -135,9 +150,9 @@ def test_run_cli(capsys: Any):
     with pytest.raises(SystemExit) as exc:
         cli.main()
     out, err = capsys.readouterr()
-    print(f'cmd=<<<{sys.argv}>>>')
-    print(f'out=<<<{out}>>>')
-    print(f'err=<<<{err}>>>')
+    debug(f'cmd=[{len(cmd)}]<<<{cmd}>>>')
+    debug(f'out=[{len(out)}]<<<{out}>>>')
+    debug(f'err=[{len(err)}]<<<{err}>>>')
     assert exc.type == SystemExit
     assert exc.value.code != 0
 
@@ -169,8 +184,8 @@ def test_run_init(capsys: Any, name: str, gport: int):
     sys.argv = [fct, '-v', '-n', name, '-g', str(gport)]
     delete.main()
     out, err = capsys.readouterr()
-    print(f'out=<<<{out}>>>')
-    print(f'err=<<<{err}>>>')
+    debug(f'out=[{len(out)}]<<<{out}>>>')
+    debug(f'err=[{len(err)}]<<<{err}>>>')
     assert not os.path.exists(namepg)
     assert namegr in err
     assert namepg in err
@@ -202,8 +217,8 @@ def test_run_create(capsys: Any, name: str, gport: int):
     create.main()
     out, err = capsys.readouterr()
     script = os.path.join(namepg, 'start.sh')
-    print(f'out=<<<{out}>>>')
-    print(f'err=<<<{err}>>>')
+    debug(f'out=[{len(out)}]<<<{out}>>>')
+    debug(f'err=[{len(err)}]<<<{err}>>>')
     assert os.path.exists(namepg)
     assert os.path.exists(script)  # make sure that the script was created
     assert namegr in err
@@ -237,15 +252,15 @@ def test_run_save(capsys: Any, name: str, gport: int):
     sys.argv = [fct, '-v', '-n', name, '-g', str(gport), '-f', namezp]
     save.main()
     out, err = capsys.readouterr()
-    print(f'out=<<<{out}>>>')
-    print(f'err=<<<{err}>>>')
+    debug(f'out=[{len(out)}]<<<{out}>>>')
+    debug(f'err=[{len(err)}]<<<{err}>>>')
     assert os.path.exists(namepg)
     assert os.path.exists(namezp)
     assert 'docker exec' in err
     assert '1 datasources' in err
     with ZipFile(namezp, 'r') as zfp:
         names = zfp.namelist()
-        print(names)
+        debug(f'names={names}')
     assert len(names) == 3
     assert 'conf.json' in names
     assert 'gr.json' in names
@@ -275,8 +290,8 @@ def test_run_load(capsys: Any, name: str, gport: int):
     sys.argv = [fct, '-v', '-n', name, '-g', str(gport), '-f', namezp]
     load.main()
     out, err = capsys.readouterr()
-    print(f'out=<<<{out}>>>')
-    print(f'err=<<<{err}>>>')
+    debug(f'out=[{len(out)}]<<<{out}>>>')
+    debug(f'err=[{len(err)}]<<<{err}>>>')
     assert namegr in err
     assert namepg in err
 
@@ -313,8 +328,8 @@ def test_run_import(capsys: Any, name: str, gport: int):
     sys.argv = [fct, '-v', '-n', name, '-g', str(gport), '-f', namezp, '-x', xcfn]
     ximport.main()
     out, err = capsys.readouterr()
-    print(f'out=<<<{out}>>>')
-    print(f'err=<<<{err}>>>')
+    debug(f'out=[{len(out)}]<<<{out}>>>')
+    debug(f'err=[{len(err)}]<<<{err}>>>')
     assert namepg in err
     assert f'http://localhost:{gport}' in err
     os.unlink(xcfn)
@@ -347,8 +362,8 @@ def test_run_export(capsys: Any, name: str, name2: str, gport2: int):
     sys.argv = [fct, '-v', '-n', name2, '-g', str(gport2)]
     create.main()
     out, err = capsys.readouterr()
-    print(f'out=<<<{out}>>>')
-    print(f'err=<<<{err}>>>')
+    debug(f'out=[{len(out)}]<<<{out}>>>')
+    debug(f'err=[{len(err)}]<<<{err}>>>')
     assert os.path.exists(namepg2)
     assert namegr2 in err
     assert namepg2 in err
@@ -371,8 +386,8 @@ def test_run_export(capsys: Any, name: str, name2: str, gport2: int):
     sys.argv = [fct, '-v', '-n', name2, '-g', str(gport2), '-f', namezp, '-x', xcfn]
     xexport.main()
     out, err = capsys.readouterr()
-    print(f'out=<<<{out}>>>')
-    print(f'err=<<<{err}>>>')
+    debug(f'out=[{len(out)}]<<<{out}>>>')
+    debug(f'err=[{len(err)}]<<<{err}>>>')
     assert namepg2 in out
     assert f'http://localhost:{GPORT2}' in out
     os.unlink(xcfn)
@@ -404,8 +419,8 @@ def test_run_status(capsys: Any, name: str, name2: str):
     sys.argv = [fct, '-v']
     status.main()
     out, err = capsys.readouterr()
-    print(f'out=<<<{out}>>>')
-    print(f'err=<<<{err}>>>')
+    debug(f'out=[{len(out)}]<<<{out}>>>')
+    debug(f'err=[{len(err)}]<<<{err}>>>')
 
     client = docker.from_env()
     containers = client.containers.list(filters={'label': 'grape.type'})
@@ -413,6 +428,61 @@ def test_run_status(capsys: Any, name: str, name2: str):
 
 
 @pytest.mark.depends(on=['test_run_status'])
+@pytest.mark.parametrize(
+    'name,gport',
+    [
+        (NAME, GPORT),
+        (NAME2, GPORT2),
+    ],
+)
+def test_run_tree(capsys: Any, name: str, gport: int):
+    '''Check the tree report.
+
+    Args:
+        capsys: Pytest fixture for capturing stdout/stderr.
+        gport: The grafana server port for a grape project.
+    '''
+    namegr, namepg, _namezp = make_names(name)
+    fct = inspect.stack()[0].function
+
+    # Prerequisites.
+    assert os.path.exists(namepg)
+
+    # Negative test.
+    with pytest.raises(SystemExit) as exc:
+        sys.argv = [fct, '-g', '55555']
+        tree.main()
+    out, err = capsys.readouterr()
+    debug(f'out=[{len(out)}]<<<{out}>>>')
+    debug(f'err=[{len(err)}]<<<{err}>>>')
+    assert exc.value.code
+
+    # Positive test.
+    # These commands did not cause stdout to be captured.
+    rfile = fct + '.log'
+    sys.argv = [fct, '-g', str(gport), '-f', rfile]
+    tree.main()
+    out, err = capsys.readouterr()
+    debug(f'out=[{len(out)}]<<<{out}>>>')
+    debug(f'err=[{len(err)}]<<<{err}>>>')
+
+    # This did NOT work. I am not sure why.
+    # The out buffer was empty!
+    # At some point in the future i need to figure this out.
+    # For now, the report is read from a file.
+    with open(rfile) as ifp:
+        out = ifp.read()
+        debug(f'out=[{len(out)}]<<<{out}>>>')
+    key = namegr + ':' + str(gport)
+    assert ' datasources' in out
+    assert ' folders' in out
+    assert namepg in out
+    assert key in out  # grape_test1gr:4700
+    assert ':1:postgres' in out  # make sure that the database is there
+    os.unlink(rfile)  # delete the report log
+
+
+@pytest.mark.depends(on=['test_run_tree'])
 @pytest.mark.parametrize(
     'name,gport',
     [
@@ -437,8 +507,8 @@ def test_run_cleanup(capsys: Any, name: str, gport: int):
     sys.argv = [fct, '-v', '-n', name, '-g', str(gport)]
     delete.main()
     out, err = capsys.readouterr()
-    print(f'out=<<<{out}>>>')
-    print(f'err=<<<{err}>>>')
+    debug(f'out=[{len(out)}]<<<{out}>>>')
+    debug(f'err=[{len(err)}]<<<{err}>>>')
     assert not os.path.exists(namepg)
     assert namepg in err
     if os.path.exists(namezp):
