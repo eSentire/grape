@@ -473,7 +473,7 @@ def test_run_tree(capsys: Any, name: str, gport: int):
     assert ' folders' in out
     assert namepg in out
     assert key in out  # grape_test1gr:4700
-    #assert ':1:postgres' in out  # make sure that the database is there
+    assert ':id=1:type=postgres' in out  # make sure that the database is there
     os.unlink(rfile)  # delete the report log
 
     # Positive test #2 (sort)
@@ -491,7 +491,7 @@ def test_run_tree(capsys: Any, name: str, gport: int):
     assert ' folders' in out
     assert namepg in out
     assert key in out  # grape_test1gr:4700
-    #assert ':1:postgres' in out  # make sure that the database is there
+    assert ':id=1:type=postgres' in out  # make sure that the database is there
     os.unlink(rfile)  # delete the report log
 
 @pytest.mark.depends(on=['test_run_tree'])
