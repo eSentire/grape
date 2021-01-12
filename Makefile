@@ -3,6 +3,7 @@ SHELL = bash
 PKG ?= grape
 WHEEL_DEPS := README.md setup.py $(shell find grape -type f | fgrep -v cache)
 .DEFAULT_GOAL := default
+SRCS = $(PKG) test
 
 # Store the virtual environment in the project space.
 export PIPENV_VENV_IN_PROJECT=1
@@ -51,13 +52,13 @@ test: init  ## Run the unit tests.
 .PHONY: pylint
 pylint: init  ## Lint the source code.
 	$(call hdr,"$@")
-	pipenv run pylint --disable=duplicate-code $(PKG) test
+	pipenv run pylint --disable=duplicate-code $(SRCS)
 
 # mypy
 .PHONY: mypy
 mypy: init  ## Type check the source code.
 	$(call hdr,"$@")
-	pipenv run mypy $(PKG) test
+	pipenv run mypy $(SRCS)
 
 # demo01
 .PHONY: demo01
@@ -113,8 +114,8 @@ help:  ## This help message.
 # are detected.
 .wheel-install: $(WHEEL_DEPS)
 	$(call hdr,"package")
-	pipenv run pylint --disable=duplicate-code $(PKG) test
-	pipenv run mypy $(PKG) test
+	pipenv run pylint --disable=duplicate-code $(SRCS)
+	pipenv run mypy $(SRCS)
 	$(MAKE) wheel-install
 	touch $@
 
