@@ -39,8 +39,6 @@ class TreeNode:
         The endmost is flag is used to determine the prefix when
         building the tree display.
 
-        The width is the maximum length of the children.
-
         Args:
             value: The value of the node.
             parent: The parent node. This is optional but only for the
@@ -53,12 +51,10 @@ class TreeNode:
         self._children : List[TreeNode] = []
         self._parent : Optional[TreeNode] = parent
         self._islast = True
-        self._width = 0
         if parent:
             parent._children.append(self)
             if len(parent._children) > 1:
                 parent._children[-2]._islast = False
-            parent._width = max(parent._width, len(value))
 
     @property
     def value(self) -> str:
@@ -79,11 +75,6 @@ class TreeNode:
     def islast(self) -> bool:
         'is this the last child?'
         return self._islast
-
-    @property
-    def width(self) -> int:
-        'width of column'
-        return self._width
 
     def get(self, value: str) -> Optional[TreeNode]:
         'get child by name'
