@@ -7,7 +7,7 @@ This allows the user to only deal with a single interface.
 import os
 import sys
 from grape import __version__
-from grape import create, delete, save, load, ximport, xexport, status
+from grape import create, delete, save, load, ximport, xexport, status, tree
 
 
 PROGRAM = os.path.splitext(os.path.basename(sys.argv[0]))[0]
@@ -86,6 +86,9 @@ COMMANDS:
                 labels that were added when the containers
                 were started.
 
+    tree        Print a tree view of the datasources, folders
+                and dashboards in a grafana server.
+
 VERSION:
     {PROGRAM}-{__version__}
 ''')
@@ -126,6 +129,7 @@ def main():
         'import': ximport.main,
         'export': xexport.main,
         'status': status.main,
+        'tree': tree.main,
     }
     if sys.argv[1] == '-V':
         # Special case handling because case matters.

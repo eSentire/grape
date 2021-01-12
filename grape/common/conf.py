@@ -10,6 +10,11 @@ from grape.common.log import debug
 from grape import __version__
 
 
+DEFAULT_USERNAME = 'admin'
+DEFAULT_PASSWORD = 'admin'
+DEFAULT_AUTH = (DEFAULT_USERNAME, DEFAULT_PASSWORD)
+
+
 def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> Dict[str, Any]:
     '''Get the grape project configuration data used by all tools.
 
@@ -46,8 +51,8 @@ def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> Dict[str, An
             'vols': {},
             'labels': {'grape.type': 'gr',
                        'grape.version' : __version__},
-            'username': 'admin',
-            'password': 'admin',
+            'username': DEFAULT_USERNAME,
+            'password': DEFAULT_PASSWORD,
             'host': 'localhost',
             'url': f'http://localhost:{grxport}',
             'datasource': {
