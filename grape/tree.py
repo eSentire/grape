@@ -277,20 +277,7 @@ VERSION:
                                      description=desc[:-2],
                                      usage=usage,
                                      epilog=epilog.rstrip() + '\n ')
-    parser.add_argument('-i', '--indent',
-                        action='store',
-                        type=int,
-                        default=3,
-                        help='''\
-Indent level.
-Default is %(default)s.
- ''')
-    parser.add_argument('--sort',
-                        action='store_true',
-                        help='''\
-Sort the tree data.
- ''')
-    add_common_args(parser)
+    add_common_args(parser, '-f', '-g', '-i', '-s')
     opts = parser.parse_args()
     return opts
 
