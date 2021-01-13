@@ -62,7 +62,7 @@ class TreeReportNode:
 
     If the user wants to sort the data and the data cannot be
     stringified, then the user must be careful to define the sort
-    function lambda argument to define an order.
+    function argument to define a function that imposes order.
     '''
     def __init__(self, value: Any, parent : Optional[TreeReportNode] = None):
         '''Create a node.
@@ -119,8 +119,14 @@ class TreeReportNode:
         compare function must be defined.
 
         For example, if the user wanted to compare integers then a
-        lambda function like this would make more sense than the
-        default: "lambda x: x" to enable integer comparisons.
+        function like this would make more sense than the default:
+        "lambda x: x" to enable integer comparisons.
+
+        For complex objects like class variables or dictionaries, the
+        lambda function would choose the appropriate fields.  For
+        example, a class with a foo member could be compared by
+        creating a function like this: "lambda x: x.foo". A similar
+        approach would be used for a dictionary or a list.
 
         Args:
             scmp: Sort comparator.
