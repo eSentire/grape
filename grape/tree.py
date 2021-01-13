@@ -67,11 +67,11 @@ class TreeReportNode:
     def __init__(self, value: Any, parent : Optional[TreeReportNode] = None):
         '''Create a node.
 
-        This is the only way to add a node to the tree.
-        At present there is no way to remove a node.
+        This is the only way to add a node to the tree. At present
+        there is no way to remove a node.
 
-        The endmost is flag is used to determine the prefix when
-        building the tree display.
+        The is_last flag is used to determine the prefix when building
+        the tree display.
 
         Args:
             value: The value of the node.
@@ -84,11 +84,11 @@ class TreeReportNode:
         self._value = value
         self._children : List[TreeReportNode] = []
         self._parent : Optional[TreeReportNode] = parent
-        self._islast = True
+        self._is_last = True
         if parent:
             parent._children.append(self)
             if len(parent._children) > 1:
-                parent._children[-2]._islast = False
+                parent._children[-2]._is_last = False
 
     @property
     def value(self) -> Any:
@@ -106,9 +106,9 @@ class TreeReportNode:
         return self._children
 
     @property
-    def islast(self) -> bool:
+    def is_last(self) -> bool:
         'is this the last child?'
-        return self._islast
+        return self._is_last
 
     def sort(self, scmp: Callable[[Any], str] = lambda x: str(x.value).lower()) -> TreeReportNode:
         '''Sort in place.
@@ -147,8 +147,8 @@ class TreeReportNode:
             self._children = sorted(self._children, key=scmp)
             for child in self._children:
                 child.sort()
-                child._islast = False  # pylint: disable=protected-access
-            self._children[-1]._islast = True  # pylint: disable=protected-access
+                child._is_last = False  # pylint: disable=protected-access
+            self._children[-1]._is_last = True  # pylint: disable=protected-access
         return self
 
     def __lt__(self, other: TreeReportNode) -> bool:
@@ -162,7 +162,7 @@ class TreeReportNode:
         return False
 
     def __str__(self) -> str:
-        'sortable'
+        'string representation of the object'
         sortable = str(self._value) + ','.join([str(x._value) for x in self._children])
         return sortable
 
@@ -184,14 +184,14 @@ class TreeReportNode:
             right1 = ''
             half = indent // 2
             if half:
-                blanks = ''.join([' ' for _ in range(half)])
+                blanks = ' ' * half
                 left = blanks
                 if indent % 2:
                     left += ' '
                 right0 = blanks
-                right1 = ''.join(['\u2500' for _ in range(half)])
+                right1 = '\u2500' * half
 
-            if self._islast:
+            if self._is_last:
                 symbol = '\u2514'  # L
             else:
                 symbol = '\u251c'  # |-
@@ -202,14 +202,19 @@ class TreeReportNode:
             node = self._parent
             while node:
                 if node.parent:
-                    if node.islast:
+                    if node.is_last:
                         symbol = ' '
                     else:
                         symbol = '\u2502'  # |
                     prefix = f'{left}{symbol}{right0}'
                     prefixes.append(prefix)
                 node = node.parent
-                assert len(prefixes) < 64
+                # The following check is meant to detect
+                # unexpected errors that result from building
+                # the tree.
+                # It should never be deeper than 3 levels.
+                # top -> folders -> dashboards
+                assert len(prefixes) < 4
 
         # Write out the node.
         prefix = ''.join(reversed(prefixes))
@@ -217,12 +222,11 @@ class TreeReportNode:
             prefix += ' '
         return prefix
 
-    def walk(self, indent: int=3, level: int=0) -> Iterable[Tuple[str, str]]:
+    def walk(self, indent: int=3) -> Iterable[Tuple[str, Any]]:
         '''Generator that walks over the tree.
 
         Args:
             indent: The indentation level for the report.
-            level: The recursion depth.
 
         Returns:
             prefix: The prefix.
@@ -237,7 +241,7 @@ class TreeReportNode:
         prefix : str = self.prefix(indent)
         yield prefix, self.value
         for child in self._children:
-            yield from child.walk(indent, level+1)
+            yield from child.walk(indent)
 
 
 def getopts() -> argparse.Namespace:
@@ -287,7 +291,8 @@ def collect_datasources(root: TreeReportNode, services: dict):
 
     Args:
         root: The root of the display tree.
-        services: The dictionary of services.
+        services: The dictionary of grafana services from
+            read_all_services.
     '''
     datasources = TreeReportNode('datasources', root)
     for obj in services['datasources']:
@@ -303,7 +308,8 @@ def collect_folders(root: TreeReportNode, services: dict):
 
     Args:
         root: The root of the display tree.
-        services: The dictionary of services.
+        services: The dictionary of grafana services from
+            read_all_services.
     '''
     folders = TreeReportNode('folders', root)
     for obj in services['folders']:
@@ -333,9 +339,9 @@ def collect(burl: str, auth: Tuple[str, str], name: str) -> TreeReportNode:
     '''List the grafana structure.
 
     Args:
-        opts: The command line options.
-        container: The container object.
-        name: The name of the top level node.
+        burl: The base URL for the grafana service.
+        auth: The grafana authorization.
+        name: The name of the top level tree node.
 
     Returns:
         tree: The root of the display tree.
@@ -373,10 +379,9 @@ def check_port(port: int) -> Container:  # pylint: disable=inconsistent-return-s
     A port is valid if it shows up as an external port
     for a grafana docker container.
 
-    If a valid port is not, the program exits.
+    If a port is not valid, the program exits.
 
     Args:
-        containers: The list of containers to search.
         port: The external port to look for.
 
     Returns:
@@ -394,17 +399,17 @@ def check_port(port: int) -> Container:  # pylint: disable=inconsistent-return-s
         'try running "pipenv run grape status -v"')
 
 
-def print_tree(opts: argparse.Namespace, ofp: TextIO, top: TreeReportNode):
+def print_tree(opts: argparse.Namespace, ofp: TextIO, root: TreeReportNode):
     '''Print out the tree view.
 
     Args:
         opts: The command line options.
         ofp: The output file pointer.
-        top: The root node of the tree.
+        root: The root node of the tree.
     '''
     if opts.sort:
-        top.sort()
-    for prefix, value in top.walk(opts.indent):
+        root.sort()
+    for prefix, value in root.walk(opts.indent):
         ofp.write(prefix)
         ofp.write(value)
         ofp.write('\n')
@@ -423,9 +428,9 @@ def main():
     container = check_port(opts.grxport)
     burl = f'http://127.0.0.1:{opts.grxport}'
     name = container.name + ':' + str(opts.grxport)
-    top = collect(burl, DEFAULT_AUTH, name)
+    root = collect(burl, DEFAULT_AUTH, name)
     if opts.fname:
         with open(opts.fname, 'w') as ofp:
-            print_tree(opts, ofp, top)
+            print_tree(opts, ofp, root)
     else:
-        print_tree(opts, sys.stdout, top)
+        print_tree(opts, sys.stdout, root)
