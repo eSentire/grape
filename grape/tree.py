@@ -339,9 +339,9 @@ def collect(burl: str, auth: Tuple[str, str], name: str) -> TreeReportNode:
     '''List the grafana structure.
 
     Args:
-        opts: The command line options.
-        container: The container object.
-        name: The name of the top level node.
+        burl: The base URL for the grafana service.
+        auth: The grafana authorization.
+        name: The name of the top level tree node.
 
     Returns:
         tree: The root of the display tree.
