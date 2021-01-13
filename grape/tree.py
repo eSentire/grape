@@ -376,7 +376,6 @@ def check_port(port: int) -> Container:  # pylint: disable=inconsistent-return-s
     If a port is not valid, the program exits.
 
     Args:
-        containers: The list of containers to search.
         port: The external port to look for.
 
     Returns:
