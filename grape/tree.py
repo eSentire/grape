@@ -393,17 +393,17 @@ def check_port(port: int) -> Container:  # pylint: disable=inconsistent-return-s
         'try running "pipenv run grape status -v"')
 
 
-def print_tree(opts: argparse.Namespace, ofp: TextIO, top: TreeReportNode):
+def print_tree(opts: argparse.Namespace, ofp: TextIO, root: TreeReportNode):
     '''Print out the tree view.
 
     Args:
         opts: The command line options.
         ofp: The output file pointer.
-        top: The root node of the tree.
+        root: The root node of the tree.
     '''
     if opts.sort:
-        top.sort()
-    for prefix, value in top.walk(opts.indent):
+        root.sort()
+    for prefix, value in root.walk(opts.indent):
         ofp.write(prefix)
         ofp.write(value)
         ofp.write('\n')
@@ -422,9 +422,9 @@ def main():
     container = check_port(opts.grxport)
     burl = f'http://127.0.0.1:{opts.grxport}'
     name = container.name + ':' + str(opts.grxport)
-    top = collect(burl, DEFAULT_AUTH, name)
+    root = collect(burl, DEFAULT_AUTH, name)
     if opts.fname:
         with open(opts.fname, 'w') as ofp:
-            print_tree(opts, ofp, top)
+            print_tree(opts, ofp, root)
     else:
-        print_tree(opts, sys.stdout, top)
+        print_tree(opts, sys.stdout, root)
