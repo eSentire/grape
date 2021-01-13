@@ -434,3 +434,4 @@ def main():
             print_tree(opts, ofp, root)
     else:
         print_tree(opts, sys.stdout, root)
+    info('done')
