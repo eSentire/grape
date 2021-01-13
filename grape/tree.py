@@ -162,7 +162,7 @@ class TreeReportNode:
         return False
 
     def __str__(self) -> str:
-        'sortable'
+        'string representation of the object'
         sortable = str(self._value) + ','.join([str(x._value) for x in self._children])
         return sortable
 
