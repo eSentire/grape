@@ -70,7 +70,7 @@ class TreeReportNode:
         This is the only way to add a node to the tree. At present
         there is no way to remove a node.
 
-        The islast flag is used to determine the prefix when building
+        The is_last flag is used to determine the prefix when building
         the tree display.
 
         Args:
@@ -84,11 +84,11 @@ class TreeReportNode:
         self._value = value
         self._children : List[TreeReportNode] = []
         self._parent : Optional[TreeReportNode] = parent
-        self._islast = True
+        self._is_last = True
         if parent:
             parent._children.append(self)
             if len(parent._children) > 1:
-                parent._children[-2]._islast = False
+                parent._children[-2]._is_last = False
 
     @property
     def value(self) -> Any:
@@ -106,9 +106,9 @@ class TreeReportNode:
         return self._children
 
     @property
-    def islast(self) -> bool:
+    def is_last(self) -> bool:
         'is this the last child?'
-        return self._islast
+        return self._is_last
 
     def sort(self, scmp: Callable[[Any], str] = lambda x: str(x.value).lower()) -> TreeReportNode:
         '''Sort in place.
@@ -147,8 +147,8 @@ class TreeReportNode:
             self._children = sorted(self._children, key=scmp)
             for child in self._children:
                 child.sort()
-                child._islast = False  # pylint: disable=protected-access
-            self._children[-1]._islast = True  # pylint: disable=protected-access
+                child._is_last = False  # pylint: disable=protected-access
+            self._children[-1]._is_last = True  # pylint: disable=protected-access
         return self
 
     def __lt__(self, other: TreeReportNode) -> bool:
@@ -191,7 +191,7 @@ class TreeReportNode:
                 right0 = blanks
                 right1 = '\u2500' * half
 
-            if self._islast:
+            if self._is_last:
                 symbol = '\u2514'  # L
             else:
                 symbol = '\u251c'  # |-
@@ -202,7 +202,7 @@ class TreeReportNode:
             node = self._parent
             while node:
                 if node.parent:
-                    if node.islast:
+                    if node.is_last:
                         symbol = ' '
                     else:
                         symbol = '\u2502'  # |
