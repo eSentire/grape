@@ -184,12 +184,12 @@ class TreeReportNode:
             right1 = ''
             half = indent // 2
             if half:
-                blanks = ''.join([' ' for _ in range(half)])
+                blanks = ' ' * half
                 left = blanks
                 if indent % 2:
                     left += ' '
                 right0 = blanks
-                right1 = ''.join(['\u2500' for _ in range(half)])
+                right1 = '\u2500' * half
 
             if self._islast:
                 symbol = '\u2514'  # L
