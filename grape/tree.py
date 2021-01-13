@@ -291,7 +291,8 @@ def collect_datasources(root: TreeReportNode, services: dict):
 
     Args:
         root: The root of the display tree.
-        services: The dictionary of services.
+        services: The dictionary of grafana services from
+            read_all_services.
     '''
     datasources = TreeReportNode('datasources', root)
     for obj in services['datasources']:
@@ -307,7 +308,8 @@ def collect_folders(root: TreeReportNode, services: dict):
 
     Args:
         root: The root of the display tree.
-        services: The dictionary of services.
+        services: The dictionary of grafana services from
+            read_all_services.
     '''
     folders = TreeReportNode('folders', root)
     for obj in services['folders']:
