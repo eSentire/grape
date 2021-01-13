@@ -209,7 +209,12 @@ class TreeReportNode:
                     prefix = f'{left}{symbol}{right0}'
                     prefixes.append(prefix)
                 node = node.parent
-                assert len(prefixes) < 64
+                # The following check is meant to detect
+                # unexpected errors that result from building
+                # the tree.
+                # It should never be deeper than 3 levels.
+                # top -> folders -> dashboards
+                assert len(prefixes) < 4
 
         # Write out the node.
         prefix = ''.join(reversed(prefixes))
