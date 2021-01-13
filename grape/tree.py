@@ -373,7 +373,7 @@ def check_port(port: int) -> Container:  # pylint: disable=inconsistent-return-s
     A port is valid if it shows up as an external port
     for a grafana docker container.
 
-    If a valid port is not, the program exits.
+    If a port is not valid, the program exits.
 
     Args:
         containers: The list of containers to search.
