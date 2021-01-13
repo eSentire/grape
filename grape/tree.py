@@ -222,7 +222,7 @@ class TreeReportNode:
             prefix += ' '
         return prefix
 
-    def walk(self, indent: int=3) -> Iterable[Tuple[str, str]]:
+    def walk(self, indent: int=3) -> Iterable[Tuple[str, Any]]:
         '''Generator that walks over the tree.
 
         Args:
