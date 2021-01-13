@@ -222,12 +222,11 @@ class TreeReportNode:
             prefix += ' '
         return prefix
 
-    def walk(self, indent: int=3, level: int=0) -> Iterable[Tuple[str, str]]:
+    def walk(self, indent: int=3) -> Iterable[Tuple[str, str]]:
         '''Generator that walks over the tree.
 
         Args:
             indent: The indentation level for the report.
-            level: The recursion depth.
 
         Returns:
             prefix: The prefix.
@@ -242,7 +241,7 @@ class TreeReportNode:
         prefix : str = self.prefix(indent)
         yield prefix, self.value
         for child in self._children:
-            yield from child.walk(indent, level+1)
+            yield from child.walk(indent)
 
 
 def getopts() -> argparse.Namespace:
