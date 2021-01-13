@@ -67,11 +67,11 @@ class TreeReportNode:
     def __init__(self, value: Any, parent : Optional[TreeReportNode] = None):
         '''Create a node.
 
-        This is the only way to add a node to the tree.
-        At present there is no way to remove a node.
+        This is the only way to add a node to the tree. At present
+        there is no way to remove a node.
 
-        The endmost is flag is used to determine the prefix when
-        building the tree display.
+        The islast flag is used to determine the prefix when building
+        the tree display.
 
         Args:
             value: The value of the node.
