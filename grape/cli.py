@@ -7,7 +7,7 @@ This allows the user to only deal with a single interface.
 import os
 import sys
 from grape import __version__
-from grape import create, delete, save, load, ximport, xexport, status, tree
+from grape import create, delete, save, load, ximport, xexport, status, tree, dashin
 
 
 PROGRAM = os.path.splitext(os.path.basename(sys.argv[0]))[0]
@@ -47,6 +47,23 @@ COMMANDS:
                 It then sets the datasource in the grafana server
                 and creates a local directory to save the postgres
                 state.
+
+    dashin      Import a single dashboard from an external source
+                into a grape grafana server or a local JSON file
+                or both.
+
+                It adds the scaffolding and variables necessary to
+                use it in a local grape project.
+
+                This command is useful for importing a single dashboard
+                into a local grape project for maintenance.
+
+    dashout     Export a single dashboard from a grafana server into
+                a local JSON file for import into an external grafana
+                server.
+
+                This command is useful for exporting a single dashboards
+                to an external grafana server.
 
     delete      The delete operation deletes all artifacts created
                 by the create operation.
@@ -123,6 +140,7 @@ def main():
 
         # commands
         'create': create.main,
+        'dashin': dashin.main,
         'delete': delete.main,
         'save': save.main,
         'load': load.main,
