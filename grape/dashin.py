@@ -74,12 +74,50 @@ it using the dashout command like this:
 '''
 # pylint: enable=line-too-long
 import argparse
+import json
 import os
 import sys
 
 from grape.common.args import CLI, add_common_args, args_get_text
-from grape.common.log import initv, info
+from grape.common.log import initv, info, err
 from grape import __version__
+
+
+# The default template settings.
+# The user can override this with the -t option.
+# Variables in the template are:
+#    {{DASH}}  The dashboard JSON.
+#    {{PGDS}}  The name of the grape data source.
+DEFAULT_TEMPLATE = {
+    # This is the wrapper for the dashboard.
+    "wrapper": {
+        {
+            "dashboard": "{{DASH}}",
+            "folderId": 0,
+            "overwrite": true
+        }
+    },
+    "datasource": {
+        {
+            "current": {
+                "selected": false,
+                "text": "{{PGDS}}",
+                "value": "{{PGDS}}"
+            },
+            "hide": 2,
+            "includeAll": false,
+            "label": null,
+            "multi": false,
+            "name": "CLARITY_DS",
+            "options": [],
+            "query": "postgres",
+            "refresh": 1,
+            "regex": "{{PGDS}}",
+            "skipUrlSync": false,
+            "type": "datasource"
+        }
+    }
+}
 
 
 def getopts() -> argparse.Namespace:
@@ -106,7 +144,7 @@ EXAMPLES:
     #            The -g option says to write to a project.
     # ------------------------------------------------
         $ {2} status -v
-        $ {2} {0} -g 4600 -j dash.json -D CUSTOM_DS=myprojectpg
+        $ {2} {0} -j dash.json -g 4600 -D CUSTOM_DS=myprojectpg
         $ {2} tree -g 4600
 
     # ------------------------------------------------
@@ -115,7 +153,7 @@ EXAMPLES:
     #            The -f option says to write to a file.
     # ------------------------------------------------
         $ {2} status -v
-        $ {2} {0} -f newdash.json -j dash.json -D CUSTOM_DS=myprojectpg
+        $ {2} {0} -j dash.json -f newdash.json -D CUSTOM_DS=myprojectpg
 
     # ------------------------------------------------
     # Example 4: Import a grafana dashboard JSON file
@@ -132,7 +170,7 @@ EXAMPLES:
     #            reported by the tree command.
     # ------------------------------------------------
         $ {2} status -v
-        $ {2} {0} -g 4600 -j dash.json -D CUSTOM_DS=myprojectpg
+        $ {2} {0} -j dash.json -g 4600 -D CUSTOM_DS=myprojectpg
         $ # Do stuff in the grafana ui.
         $ {2} tree -g 4600  # tree view gets the dasboard id (-d)
         $ {2} dashout -g 4600 -d 3 -f newdash.json -D CUSTOM_DS
@@ -145,9 +183,97 @@ VERSION:
                                      description=desc[:-2],
                                      usage=usage,
                                      epilog=epilog.rstrip() + '\n ')
-    add_common_args(parser, '-f', '-g', '-i', '-s')
+    add_common_args(parser, '-f', '-g', '-i', '-j', '-t')
     opts = parser.parse_args()
     return opts
+
+
+def read_raw_json(opts: argparse.Namespace) -> dict:
+    '''Read the raw JSON.
+
+    Args:
+        opts: The command line arguments.
+
+    Returns:
+        dash: The initial JSON dashboard. It is guaranteed to be a dict.
+    '''
+    value = {}
+    try:
+        with open(opts.json) as ifp:
+            data = ifp.read()
+            if data.startswith('['):
+                err(f'input dashboard json file is a list not a map: "{opts.json}"')
+            if not data.startswith('{'):
+                # It must be a dictionary.
+                err(f'input dashboard json file is not a map: "{opts.json}"')
+        value = json.loads(data)
+    except FileNotFoundError:
+        err(f'input dashboard json file does not exist: "{opts.json}"')
+    except json.decoder.JSONDecodeError as exc:
+        err(f'input dashboard json file is invalid: "{opts.json}" - {exc}')
+    return value
+
+
+def read_template(opts: argparse.Namespace) -> dict:
+    '''Read the dashboard template.
+
+    This template contains the wrapper and variable
+    settings (as code) that are used to augment the
+    data.
+
+    See the comments for the DEFAULT_TEMPLATE for
+    more details about the structure.
+
+    Args:
+        opts: The command line arguments.
+
+    Returns:
+        template: The template.
+    '''
+    path = opts.template
+    if not path:
+        template = DEFAULT_TEMPLATE
+    else:
+        try:
+            with open(path) as ifp:
+                template = json.read(ifp)
+        except FileNotFoundError:
+            err(f'dashboard template file does not exist: "{opts.template}"')
+        except json.decoder.JSONDecodeError as exc:
+            err(f'dashboard template file is invalid: "{opts.template}" - {exc}')
+    if 'wrapper' not in template:
+        err('missing expected key in the template')
+    if 'datasource' not in template:
+        err('missing expected key in the template')
+    return template
+
+
+def wrapit(dash: dict, template: dict) -> dict:
+    '''Add the wrapper if it is not already present.
+
+    This is interesting because it uses a template so
+    that modifying it in the future does not require
+    a code change.
+
+    Args:
+        dash: The unwrapped initial dashboard.
+        template: The template.
+
+    Returns:
+        dash: The updated dashboard.
+    '''
+    wrapper = template['wrapper']
+    set1 = set([k for k in wrapper])
+    set2 = set([k for k in dash])
+    if set1.issubset(set2):
+        # The wrapper is already defined.
+        # We assume that it is already complete.
+        return dash
+    wrapper_string = json.dumps(wrapper)
+    dash_string = json.dumps(dash)
+    wrapper_string.replace('{{DASH}}', dash_string)
+    updated = json.loads(wrapper_string)
+    return updated
 
 
 def main():
@@ -160,6 +286,11 @@ def main():
     opts = getopts()
     initv(opts.verbose)
     info('dashin')
+    template = read_template(opts)
+    dash = read_raw_json(opts)
+    new_dash = wrapit(dash, template)
+    new_dash = setvars(new_dash, template)
+    info('done')
 #    container = check_port(opts.grxport)
 #    burl = f'http://127.0.0.1:{opts.grxport}'
 #    name = container.name + ':' + str(opts.grxport)

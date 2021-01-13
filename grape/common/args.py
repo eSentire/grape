@@ -76,6 +76,14 @@ Indent level.
 Default is %(default)s.
  ''')
 
+    if '-j' in enable:
+        parser.add_argument('-j', '--json',
+                            action='store',
+                            default='',
+                            help='''\
+The JSON file.
+ ''')
+
     if '-n' in enable:
         parser.add_argument('-n', '--name',
                             action='store',
@@ -116,10 +124,20 @@ host interface port will be 4401.
  ''')
 
     if '-s' in enable:
+        # This one is only used by the "tree" command.
         parser.add_argument('-s', '--sort',
                             action='store_true',
                             help='''\
 Sort the tree data.
+ ''')
+
+    if '-t' in enable:
+        # This one is used by dashin and dashout.
+        parser.add_argument('-t', '--template',
+                            action='store',
+                            default='',
+                            help='''\
+The dashin/dashout template data.
  ''')
 
     parser.add_argument('-v', '--verbose',
