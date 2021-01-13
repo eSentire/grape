@@ -57,7 +57,12 @@ class TreeReportNode:
         for prefix, value in top.sort().walk():
             print(f'{prefix}{value}')
 
-    It can accept any type of data.
+    It can accept any type of data because the data is simply passed
+    through unless the caller wants to sort the data.
+
+    If the user wants to sort the data and the data cannot be
+    stringified, then the user must be careful to define the sort
+    function lambda argument to define an order.
     '''
     def __init__(self, value: Any, parent : Optional[TreeReportNode] = None):
         '''Create a node.
@@ -108,13 +113,28 @@ class TreeReportNode:
     def sort(self, scmp: Callable[[Any], str] = lambda x: str(x.value).lower()) -> TreeReportNode:
         '''Sort in place.
 
+        The sort function can work for any data type but for types
+        that do not support being stringified or for cases where being
+        stringified does not create the desired ordering, a sort
+        compare function must be defined.
+
+        For example, if the user wanted to compare integers then a
+        lambda function like this would make more sense than the
+        default: "lambda x: x" to enable integer comparisons.
+
         Args:
             scmp: Sort comparator.
 
         Usage:
-            def sortit(root: TreeReportNode):
-                'sorter'
+            def sort_string(root: TreeReportNode):
+                'string type thing sorter'
                 fct = lambda x: str(x.value).lower()
+                root.sort(fct)
+
+            def sort_integer(root: TreeReportNode):
+                'integer thing sorter'
+                assert isinstance(root.value, int)
+                fct = lambda x: x
                 root.sort(fct)
         '''
         if self._children:
