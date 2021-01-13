@@ -31,6 +31,9 @@ def args_get_text(string: str):
 def add_common_args(parser: argparse.ArgumentParser, *enable: str):
     '''Add command line arguments that are common to all tools.
 
+    Managine the arguments in a single place guarantees consistent
+    arguments for all commands.
+
     Args:
         parser - The parser object.
         enable: The options to enable.
