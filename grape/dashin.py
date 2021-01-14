@@ -44,7 +44,7 @@ values. Here is an example:
 
    $ grape dashin -j external-dashboard.json -D COOL_DS=myprojectgr
 
-When you are finished working on the dashboard you can export
+When you are finished working on the dashboard you can upload
 it using the dashout command like this:
 
    $ # Get the grape projects that are running.
@@ -77,11 +77,13 @@ import argparse
 import json
 import os
 import sys
-
 from typing import Any
 
+import requests
+
 from grape.common.args import CLI, add_common_args, args_get_text
-from grape.common.log import initv, info, err, debug
+from grape.common.log import initv, info, err, warn, debug
+from grape.common.conf import DEFAULT_AUTH
 from grape import __version__
 
 
@@ -90,6 +92,7 @@ from grape import __version__
 # Variables in the template are:
 #    {{DASH}}  The dashboard JSON.
 #    {{PGDS}}  The name of the grape data source.
+#    {{PGNM}}  The name of the grape data source variable.
 DEFAULT_TEMPLATE : dict = {
     # This is the wrapper for the dashboard.
     "wrapper": {
@@ -108,7 +111,7 @@ DEFAULT_TEMPLATE : dict = {
         "includeAll": False,
         "label": None,
         "multi": False,
-        "name": "CLARITY_DS",
+        "name": "{{PGNM}}",
         "options": [],
         "query": "postgres",
         "refresh": 1,
@@ -156,9 +159,8 @@ EXAMPLES:
 
     # ------------------------------------------------
     # Example 4: Import a grafana dashboard JSON file
-    #            (dash.json) into a grape project.
-    #            Change it in the grafana UI and then
-    #            export it to newdash.json.
+    #            (dash.json), change it in the grafana
+    #            UI and then upload it to newdash.json.
     #
     #            Note that the dashout command does
     #            not accept a value for the variable.
@@ -182,7 +184,7 @@ VERSION:
                                      description=desc[:-2],
                                      usage=usage,
                                      epilog=epilog.rstrip() + '\n ')
-    add_common_args(parser, '-D', '-f', '-g', '-i', '-j', '-t')
+    add_common_args(parser, '-D', '-f', '-g', '-i', '-j', '-t', '-u')
     opts = parser.parse_args()
     return opts
 
@@ -351,8 +353,22 @@ def setvars(opts: argparse.Namespace, dash: dict, template: dict) -> dict:
     if 'uid' in new_dash:
         new_dash['uid'] = None
 
+    # Load the datasource variables.
+    dsvars = {}
+    if 'dashboard' in dash:
+        ddash = dash['dashboard']
+        if '__inputs' in ddash:
+            for var in ddash['__inputs']:
+                if var['type'] == 'datasource':
+                    key = var['name']
+                    value = var['pluginName']
+                    dsvars[key] = value
+                    info(f'   found datasource variable in dashboard: {key}="{value}"')
+
     if not opts.vardefs:
         # No variables defined.
+        if dsvars:
+            warn(f'need to define this variables {dsvars}')
         return new_dash
 
     # Create the variable scaffolding.
@@ -368,9 +384,11 @@ def setvars(opts: argparse.Namespace, dash: dict, template: dict) -> dict:
         if '=' not in variable:
             err(f'invalid variable specification, it must have a value: {variable}')
         name, value = variable.split('=', 1)
-        vname = '${{' + name + '}}'
-        info(f'   creating variable {vname}')
-        new_var = setvar(tds, vname, value)
+        info(f'   creating variable {name} with value "{value}"')
+        if name not in dsvars:
+            warn(f'variable "{name}" is not defined in dashboard json')
+        new_var = setvar(tds, '{{PGDS}}', value)
+        new_var = setvar(new_var, '{{PGNM}}', name)
         # Always insert at the beginning of the list.
         # This O(N) operation is okay because the list
         # is typically very small.
@@ -397,23 +415,37 @@ def dump_new_dash(opts: argparse.Namespace, dash: dict):
         ofp.write(string + '\n')
 
 
-def write_to_grafana(_opts: argparse.Namespace, _dash: dict):
+def write_to_grafana(opts: argparse.Namespace, dash: dict):
     '''Write the dashboard to the grape grafana server.
 
-    This uses the -g option to figure out where to write to.
-                  ^
-                  +---- This will NOT work.
+    This uses the -g option to figure out where to write to when the
+    -u option is specified.
+
+    The -g option has a default so it is impossible to detect the case
+    where no upload is wanted.
 
     Args:
         opts: The command line arguments.
         dash: The unwrapped initial dashboard.
     '''
-    # NOTE: this is tricky because the -g and -n options
-    #       have default values which makes it hard to
-    #       determine when/if grafana needs to be updated.
-    #       I suspect that we will have to add another option,
-    #       perhaps something like --update or --upload.
-    info('not enabled')
+    if not opts.upload:
+        return
+    burl = f'http://127.0.0.1:{opts.grxport}'
+    info('upload to {burl}')
+    headers = {'Content-Type': 'application/json',
+               'Accept': 'application/json'}
+    auth = DEFAULT_AUTH
+    try:
+        url = burl + '/api/datasources'
+        response = requests.post(burl,
+                                 json=dash,
+                                 auth=auth,
+                                 headers=headers)
+    except requests.ConnectionError as exc:
+        err(str(exc))
+    info(f'response status: {response.status_code} from {url}')
+    if response.status_code not in (200, 400, 412):
+        err(f'upload failed with status {response.status_code} to {url}')
 
 
 def main():
