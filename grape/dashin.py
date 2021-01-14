@@ -78,8 +78,10 @@ import json
 import os
 import sys
 
+from typing import Any
+
 from grape.common.args import CLI, add_common_args, args_get_text
-from grape.common.log import initv, info, err
+from grape.common.log import initv, info, err, debug
 from grape import __version__
 
 
@@ -88,34 +90,31 @@ from grape import __version__
 # Variables in the template are:
 #    {{DASH}}  The dashboard JSON.
 #    {{PGDS}}  The name of the grape data source.
-DEFAULT_TEMPLATE = {
+DEFAULT_TEMPLATE : dict = {
     # This is the wrapper for the dashboard.
     "wrapper": {
-        {
-            "dashboard": "{{DASH}}",
-            "folderId": 0,
-            "overwrite": true
-        }
+        "dashboard": "{{DASH}}",
+        "folderId": 0,
+        "overwrite": True
     },
     "datasource": {
-        {
-            "current": {
-                "selected": false,
-                "text": "{{PGDS}}",
-                "value": "{{PGDS}}"
-            },
-            "hide": 2,
-            "includeAll": false,
-            "label": null,
-            "multi": false,
-            "name": "CLARITY_DS",
-            "options": [],
-            "query": "postgres",
-            "refresh": 1,
-            "regex": "{{PGDS}}",
-            "skipUrlSync": false,
-            "type": "datasource"
-        }
+        # This is the definition of a datasource variable.
+        "current": {
+            "selected": False,
+            "text": "{{PGDS}}",
+            "value": "{{PGDS}}"
+        },
+        "hide": 2,
+        "includeAll": False,
+        "label": None,
+        "multi": False,
+        "name": "CLARITY_DS",
+        "options": [],
+        "query": "postgres",
+        "refresh": 1,
+        "regex": "{{PGDS}}",
+        "skipUrlSync": False,
+        "type": "datasource"
     }
 }
 
@@ -183,7 +182,7 @@ VERSION:
                                      description=desc[:-2],
                                      usage=usage,
                                      epilog=epilog.rstrip() + '\n ')
-    add_common_args(parser, '-f', '-g', '-i', '-j', '-t')
+    add_common_args(parser, '-D', '-f', '-g', '-i', '-j', '-t')
     opts = parser.parse_args()
     return opts
 
@@ -197,6 +196,7 @@ def read_raw_json(opts: argparse.Namespace) -> dict:
     Returns:
         dash: The initial JSON dashboard. It is guaranteed to be a dict.
     '''
+    info(f'reading {opts.json}')
     value = {}
     try:
         with open(opts.json) as ifp:
@@ -232,11 +232,13 @@ def read_template(opts: argparse.Namespace) -> dict:
     '''
     path = opts.template
     if not path:
+        info('using default internal template')
         template = DEFAULT_TEMPLATE
     else:
+        info(f'reading {opts.template}')
         try:
             with open(path) as ifp:
-                template = json.read(ifp)
+                template = json.load(ifp)
         except FileNotFoundError:
             err(f'dashboard template file does not exist: "{opts.template}"')
         except json.decoder.JSONDecodeError as exc:
@@ -246,6 +248,58 @@ def read_template(opts: argparse.Namespace) -> dict:
     if 'datasource' not in template:
         err('missing expected key in the template')
     return template
+
+
+def setvar(data: Any, name: str, value: Any) -> Any:
+    '''Set a data value based on a variable name.
+
+    This function walks through JSON structure and replaces
+    a variable name with a value.
+
+    For example, assume that this is the input data:
+        {
+           "name": "{{NAME}}"
+           "path": "/here/there/{{NAME}}/everywhere"
+        }
+
+    If the variable name is "{{NAME}}" and the value is "foobar",
+    the result of this operation would be:
+        {
+           "name": "foobar"
+           "path": "/here/there/foobar/everywhere"
+        }
+
+    Although example above uses strings for the variable value that is
+    misleading because the value can be anything including nested
+    JSON.
+
+    Args:
+        data: The dataset.
+        name: The name to replace. Typically something like {{DASH}}.
+        value: The value to replace it with.
+
+    Returns:
+        updated: The updated data.
+    '''
+    if isinstance(data, (list, tuple)):
+        for item in data:
+            data = setvar(item, name, value)
+    elif isinstance(data, dict):
+        for key, val in data.items():
+            if isinstance(val, str):
+                if name == val:
+                    data[key] = value  # Allow change of type.
+                elif name in val:
+                    data[key] = val.replace(name, str(value))
+            elif isinstance(val, (list, tuple, dict)):
+                data[key] = setvar(val, name, value)
+    elif isinstance(data, str):
+        string = str(data)
+        if string == name:
+            data = value  # Allow change of type.
+        elif name in string:
+            data = str(data).replace(name, str(value))
+    return data
 
 
 def wrapit(dash: dict, template: dict) -> dict:
@@ -263,17 +317,103 @@ def wrapit(dash: dict, template: dict) -> dict:
         dash: The updated dashboard.
     '''
     wrapper = template['wrapper']
-    set1 = set([k for k in wrapper])
-    set2 = set([k for k in dash])
-    if set1.issubset(set2):
-        # The wrapper is already defined.
-        # We assume that it is already complete.
+    setw = set(wrapper)
+    setd = set(dash)
+    if setw.issubset(setd):
+        # All of the keys in the wrapper are defined so
+        # we assyne that the wrapper is already defined.
         return dash
-    wrapper_string = json.dumps(wrapper)
-    dash_string = json.dumps(dash)
-    wrapper_string.replace('{{DASH}}', dash_string)
-    updated = json.loads(wrapper_string)
+    info('wrapping dashboard')
+    updated = setvar(wrapper, '{{DASH}}', dash)
+    debug(f'updated:\n{json.dumps(updated, indent=4, sort_keys=True)}')
     return updated
+
+
+def setvars(opts: argparse.Namespace, dash: dict, template: dict) -> dict:
+    '''Set the variable values.
+
+    The datasource variable values are specified on the command line.
+
+    Args:
+        opts: The command line arguments.
+        dash: The unwrapped initial dashboard.
+        template: The template.
+
+    Returns:
+        dash: The updated dashboard.
+    '''
+    info('setting the variables')
+    new_dash = dash
+
+    # Fix the id and uid.
+    if 'id' in new_dash:
+        new_dash['id'] = None
+    if 'uid' in new_dash:
+        new_dash['uid'] = None
+
+    if not opts.vardefs:
+        # No variables defined.
+        return new_dash
+
+    # Create the variable scaffolding.
+    if 'templating' not in new_dash:
+        # Add the variable scaffolding.
+        new_dash['templating'] = {
+            'list': []
+        }
+
+    # Process all of the command line variables.
+    tds = template['datasource']
+    for variable in opts.vardefs:
+        if '=' not in variable:
+            err(f'invalid variable specification, it must have a value: {variable}')
+        name, value = variable.split('=', 1)
+        vname = '${{' + name + '}}'
+        info(f'   creating variable {vname}')
+        new_var = setvar(tds, vname, value)
+        # Always insert at the beginning of the list.
+        # This O(N) operation is okay because the list
+        # is typically very small.
+        new_dash['dashboard']['templating']['list'].insert(0, new_var)
+
+    debug(f'new_dash:\n{json.dumps(new_dash, indent=4, sort_keys=True)}')
+    return new_dash
+
+
+def dump_new_dash(opts: argparse.Namespace, dash: dict):
+    '''Dump new dash.
+
+    This is only done if -f is specified.
+
+    Args:
+        opts: The command line arguments.
+        dash: The unwrapped initial dashboard.
+    '''
+    if not opts.fname:
+        return
+    info(f'writing updated dashboard JSON to {opts.fname}')
+    with open(opts.fname, 'w') as ofp:
+        string = json.dumps(dash, indent=4, sort_keys=True)
+        ofp.write(string + '\n')
+
+
+def write_to_grafana(_opts: argparse.Namespace, _dash: dict):
+    '''Write the dashboard to the grape grafana server.
+
+    This uses the -g option to figure out where to write to.
+                  ^
+                  +---- This will NOT work.
+
+    Args:
+        opts: The command line arguments.
+        dash: The unwrapped initial dashboard.
+    '''
+    # NOTE: this is tricky because the -g and -n options
+    #       have default values which makes it hard to
+    #       determine when/if grafana needs to be updated.
+    #       I suspect that we will have to add another option,
+    #       perhaps something like --update or --upload.
+    info('not enabled')
 
 
 def main():
@@ -289,14 +429,7 @@ def main():
     template = read_template(opts)
     dash = read_raw_json(opts)
     new_dash = wrapit(dash, template)
-    new_dash = setvars(new_dash, template)
+    new_dash = setvars(opts, new_dash, template)
+    dump_new_dash(opts, new_dash)
+    write_to_grafana(opts, new_dash)
     info('done')
-#    container = check_port(opts.grxport)
-#    burl = f'http://127.0.0.1:{opts.grxport}'
-#    name = container.name + ':' + str(opts.grxport)
-#    top = collect(burl, DEFAULT_AUTH, name)
-#    if opts.fname:
-#        with open(opts.fname, 'w') as ofp:
-#            print_tree(opts, ofp, top)
-#    else:
-#        print_tree(opts, sys.stdout, top)

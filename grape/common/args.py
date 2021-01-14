@@ -38,6 +38,24 @@ def add_common_args(parser: argparse.ArgumentParser, *enable: str):
         parser - The parser object.
         enable: The options to enable.
     '''
+    if '-D' in enable:
+        parser.add_argument('-D', '--define-variable',
+                            action='append',
+                            type=str,
+                            dest='vardefs',
+                            metavar=('VARIABLE'),
+                            help='''\
+Define a variable name for the dashin and dashout
+commands.
+
+A value is assigned to variable by adding an
+equals sign.
+
+Example for dashin: -D FOO_DS=exp1pg
+
+Example for dashout: -D FOO_DS
+ ''')
+
     if '-f' in enable:
         parser.add_argument('-f', '--file',
                             action='store',
