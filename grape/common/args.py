@@ -158,6 +158,16 @@ Sort the tree data.
 The dashin/dashout template data.
  ''')
 
+    if '-u' in enable:
+        # This one is used by dashin.
+        parser.add_argument('-u', '--upload',
+                            action='store_true',
+                            default='',
+                            help='''\
+Upload the updated dashboard JSON to the
+grafana server specified by -g.
+ ''')
+
     parser.add_argument('-v', '--verbose',
                         action='count',
                         default=0,
