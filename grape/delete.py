@@ -47,7 +47,7 @@ VERSION:
                                      description=desc[:-2],
                                      usage=usage,
                                      epilog=epilog.rstrip() + '\n ')
-    add_common_args(parser)
+    add_common_args(parser, '-g', '-n', '-p', '-w')
     opts = parser.parse_args()
     return opts
 
@@ -107,6 +107,6 @@ def main():
     opts = getopts()
     initv(opts.verbose)
     info(f'deleting {opts.base} based containers')
-    conf = get_conf(opts.base, opts.fname, opts.grxport, opts.pgxport)
+    conf = get_conf(opts.base, '', opts.grxport, opts.pgxport)
     delete(conf)
     info('done')

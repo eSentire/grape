@@ -28,29 +28,36 @@ def args_get_text(string: str):
     return lookup.get(string, string)
 
 
-def add_common_args(parser: argparse.ArgumentParser):
+def add_common_args(parser: argparse.ArgumentParser, *enable: str):
     '''Add command line arguments that are common to all tools.
+
+    Managing the arguments in a single place guarantees consistent
+    arguments for all commands.
 
     Args:
         parser - The parser object.
+        enable: The options to enable.
     '''
-    parser.add_argument('-f', '--file',
-                        action='store',
-                        type=str,
-                        dest='fname',
-                        default='',
-                        metavar=('FILE'),
-                        help='''\
-The file name for load and save operations.
+    if '-f' in enable:
+        parser.add_argument('-f', '--file',
+                            action='store',
+                            type=str,
+                            dest='fname',
+                            default='',
+                            metavar=('FILE'),
+                            help='''\
+The file name for load, save, import, export
+and tree operations.
 
 If not specified the default is the BASE.zip.
  ''')
 
-    parser.add_argument('-g', '--grxport',
-                        action='store',
-                        type=int,
-                        default=4600,
-                        help='''\
+    if '-g' in enable:
+        parser.add_argument('-g', '--grxport',
+                            action='store',
+                            type=int,
+                            default=4600,
+                            help='''\
 The grafana server host interface port.
 This is the port that allows access
 to the grafana visualization server
@@ -59,12 +66,23 @@ from the localhost.
 The default is %(default)s.
  ''')
 
-    parser.add_argument('-n', '--name',
-                        action='store',
-                        type=str,
-                        dest='base',
-                        default=DEFAULT_NAME,
-                        help='''\
+    if '-i' in enable:
+        parser.add_argument('-i', '--indent',
+                            action='store',
+                            type=int,
+                            default=3,
+                            help='''\
+Indent level.
+Default is %(default)s.
+ ''')
+
+    if '-n' in enable:
+        parser.add_argument('-n', '--name',
+                            action='store',
+                            type=str,
+                            dest='base',
+                            default=DEFAULT_NAME,
+                            help='''\
 The base name for the docker containers.
 
 The default is %(default)s.
@@ -80,11 +98,12 @@ persistent postgres data storage in
     %(default)s
  ''')
 
-    parser.add_argument('-p', '--pgxport',
-                        action='store',
-                        type=int,
-                        default=0,
-                        help='''\
+    if '-p' in enable:
+        parser.add_argument('-p', '--pgxport',
+                            action='store',
+                            type=int,
+                            default=0,
+                            help='''\
 The postgres server host interface port.
 This is the port that allows access
 to the database from the localhost.
@@ -94,6 +113,13 @@ than the grafana port. Thus if the
 grafana host interface port is specified
 as 4400, the default postgres server
 host interface port will be 4401.
+ ''')
+
+    if '-s' in enable:
+        parser.add_argument('-s', '--sort',
+                            action='store_true',
+                            help='''\
+Sort the tree data.
  ''')
 
     parser.add_argument('-v', '--verbose',
@@ -112,24 +138,26 @@ Setting -v twice sets logging.DEBUG.
 Show program's version number and exit.
  ''')
 
-    parser.add_argument('-w', '--wait',
-                        action='store',
-                        type=float,
-                        default=60,
-                        metavar=('SECONDS'),
-                        help='''\
+    if '-w' in enable:
+        parser.add_argument('-w', '--wait',
+                            action='store',
+                            type=float,
+                            default=60,
+                            metavar=('SECONDS'),
+                            help='''\
 The maximum number of seconds to wait after
 the containers have been created. It is used
 by the create and load commands.
 
 Default: %(default)s.
-''')
+ ''')
 
-    parser.add_argument('-x', '--external-conf',
-                        action='store',
-                        dest='xconf',
-                        metavar=('FILE'),
-                        help='''\
+    if '-x' in enable:
+        parser.add_argument('-x', '--external-conf',
+                            action='store',
+                            dest='xconf',
+                            metavar=('FILE'),
+                            help='''\
 YAML conf file that describes how
 to access the external grafana server
 for the import and export operation.

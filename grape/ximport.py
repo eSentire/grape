@@ -82,7 +82,7 @@ VERSION:
                                      description=desc[:-2],
                                      usage=usage,
                                      epilog=epilog.rstrip() + '\n ')
-    add_common_args(parser)
+    add_common_args(parser, '-f', '-g', '-n', '-p', '-w', '-x')
     opts = parser.parse_args()
     return opts
 
