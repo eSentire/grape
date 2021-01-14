@@ -13,6 +13,7 @@ so) so creating a fixture to create and tear down projects for each
 test would slow things down too much.
 '''
 import inspect
+import json
 import os
 import sys
 from typing import Any, Tuple
@@ -29,6 +30,7 @@ from grape import ximport
 from grape import xexport
 from grape import status
 from grape import tree
+from grape import dashin
 
 
 GPORT = 4700
@@ -155,6 +157,42 @@ def test_run_cli(capsys: Any):
     debug(f'err=[{len(err)}]<<<{err}>>>')
     assert exc.type == SystemExit
     assert exc.value.code != 0
+
+
+@pytest.mark.parametrize(
+    'name,value,good,jdata',
+    [
+        ('{{VAR1}}', 'foo', None, {'check': '{{VAR1}}'}),
+        ('{{VAR1}}', 'bar', 'foobarspam', {'check': 'foo{{VAR1}}spam'}),
+        ('{{VAR1}}', 42, None, {'check': '{{VAR1}}'}),
+        ('{{VAR1}}', {'spam': 'bar'}, None, {'check': '{{VAR1}}'}),
+        ('{{VAR1}}', 'foo', None, {'check': '{{VAR1}}', 'list': ['{{VAR1}}', 42]}),
+    ],
+)
+def test_json_setvars(capsys: Any, name: str, value: Any, good: Any, jdata: dict):
+    '''Test the JSON variable setter function used by dashin.
+
+    This function is critical to the correct functioning of the dashin
+    logic.
+
+    Args:
+        capsys: Pytest fixture for capturing stdout/stderr.
+        name: The variable name.
+        value: The variable value.
+        good: The good value.
+        jdata: The JSON.
+    '''
+    debug(f'jdata:\n{json.dumps(jdata, indent=4)}')
+    updated = dashin.setvar(jdata, name, value)
+    out, err = capsys.readouterr()
+    debug(f'out=[{len(out)}]<<<{out}>>>')
+    debug(f'err=[{len(err)}]<<<{err}>>>')
+    debug(f'updated:\n{json.dumps(updated, indent=4)}')
+    if not good:
+        good = value
+    assert updated['check'] == good
+    if 'list' in updated:
+        assert updated['list'][0] == good
 
 
 @pytest.mark.depends(on=['test_run_cli'])
