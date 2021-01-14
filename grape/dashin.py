@@ -283,9 +283,9 @@ def setvar(data: Any, name: str, value: Any) -> Any:
     Returns:
         updated: The updated data.
     '''
-    if isinstance(data, (list, tuple)):
-        for item in data:
-            data = setvar(item, name, value)
+    if isinstance(data, list):
+        for i, item in enumerate(data):
+            data[i] = setvar(item, name, value)
     elif isinstance(data, dict):
         for key, val in data.items():
             if isinstance(val, str):
