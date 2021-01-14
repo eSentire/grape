@@ -251,7 +251,7 @@ def read_all_services(burl: str, auth: tuple) -> dict:
     '''Read the complete grafana state from an external server and
     save it.
 
-    The services are the datasourceds, folders and dashboards.
+    The services are the datasources, folders and dashboards.
 
     Args:
         burl: The base URL.
