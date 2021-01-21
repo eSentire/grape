@@ -1,78 +1,19 @@
-# pylint: disable=line-too-long
 '''
-Dashin translates a dashboard JSON file exported from an external
-grafana server into a dashboard in a grape grafana server.
+Implements the dashin command.
 
-It does this by wrapping the dashboard description with the following
-scaffolding:
-   {
-     "dashboards": <input-JSON>,
-      "folderId": 0,
-      "overwrite": true
-   }
+See the common/dashio.py file for more details about the
+dashin/dashout flow. It is documented in a single place
+because dashin/dashout are so closely intertwined. One
+does not make sense with the other.
 
-It also defines datasource variables by adding them to the
-dashboard "templating" section. If the input JSON references
-a datasource variable named: `${COOL_DS}` (for cool datasource)
-and your grape datasource name is `myprojectgr` then this
-process would create the following variable definition:
-
-    {
-      "current": {
-        "selected": false,
-        "text": "myprojectgr",
-        "value": "myprojectgr"
-      },
-      "hide": 2,
-      "includeAll": false,
-      "label": null,
-      "multi": false,
-      "name": "CLARITY_DS",
-      "options": [],
-      "query": "postgres",
-      "refresh": 1,
-      "regex": "myprojectgr",
-      "skipUrlSync": false,
-      "type": "datasource"
-  }
-
-The scaffolding and the variables are removed by the dashout
-command.
-
-The input is a JSON file and description of the variables and
-values. Here is an example:
-
-   $ grape dashin -j external-dashboard.json -D COOL_DS=myprojectgr
-
-When you are finished working on the dashboard you can upload
-it using the dashout command like this:
-
-   $ # Get the grape projects that are running.
-   $ pipenv run grape status -v
-   INFO 2021-01-11 18:08:42,447 status.py:187 - status
-     Name   Type  Version  Status   Started              Elapsed   Id          Image              Created              Port
-     jbhgr  gr    0.4.3    running  2021-01-11T16:47:24  09:21:18  5368be647f  sha256:9ad3ce931a  2021-01-11T16:47:24  4640
-     jbhpg  pg    0.4.3    running  2021-01-11T16:47:24  09:21:17  7cf96782d7  sha256:0b0b68fee3  2021-01-11T16:47:24  4641
-   INFO 2021-01-11 18:08:42,498 status.py:222 - done
-
-   $ # Get the dashboard id from the status report.
-   $ pipenv run grape tree -g 4640
-   jbhgr:4640
-     ├─ datasources
-     │   └─ jbhpg:id=1:ty[e=postgres
-     └─ folders
-         ├─ JBH:1
-         │   └─ dashboards
-         │       ├─ Northstar Dashboard Mock:id=5:uid=lC0QCuaMz:panels=33
-         │       └─ OKR Initiatives Health:id=6:uid=peAwjuaMk:panels=6
-         └─ Northstar:2
-             └─ dashboards
-                 ├─ Jenkins Build Health Details:id=4:uid=ir0QjX-Mz:panels=9
-                 └─ Jenkins Build Health:id=3:uid=6Q0QCuaGk:panels=70
-
-   $ grape dashout -g 4640 -d 4 -f updated-external-dashboard.json -D COOL_DS
+Note that dashin cannot import directly from external grafana
+server. The inability to do that was an intentional design decision
+that resulted from considering the complexity of different authn/z
+schemes (usernames, passwords, roles, etc.) that might exist for any
+external grafana server. This system understands how to interact with
+grape grafana servers for authn/z. It does not know how to interact
+with other grafana servers for authn/z.
 '''
-# pylint: enable=line-too-long
 import argparse
 import json
 import os
@@ -84,42 +25,9 @@ import requests
 from grape.common.args import CLI, add_common_args, args_get_text
 from grape.common.log import initv, info, err, warn, debug
 from grape.common.conf import DEFAULT_AUTH
+from grape.common.dashio import read_template, write_dash
+from grape.common.json import read_json_dict_from_file
 from grape import __version__
-
-
-# The default template settings.
-# The user can override this with the -t option.
-# Variables in the template are:
-#    {{DASH}}  The dashboard JSON.
-#    {{PGDS}}  The name of the grape data source.
-#    {{PGNM}}  The name of the grape data source variable.
-DEFAULT_TEMPLATE : dict = {
-    # This is the wrapper for the dashboard.
-    "wrapper": {
-        "dashboard": "{{DASH}}",
-        "folderId": 0,
-        "overwrite": True
-    },
-    "datasource": {
-        # This is the definition of a datasource variable.
-        "current": {
-            "selected": False,
-            "text": "{{PGDS}}",
-            "value": "{{PGDS}}"
-        },
-        "hide": 2,
-        "includeAll": False,
-        "label": None,
-        "multi": False,
-        "name": "{{PGNM}}",
-        "options": [],
-        "query": "postgres",
-        "refresh": 1,
-        "regex": "{{PGDS}}",
-        "skipUrlSync": False,
-        "type": "datasource"
-    }
-}
 
 
 def getopts() -> argparse.Namespace:
@@ -142,11 +50,11 @@ EXAMPLES:
     # ------------------------------------------------
     # Example 2: Import a grafana dashboard JSON file
     #            into a grape project and then observe
-    #            it in the tree dump.
-    #            The -g option says to write to a project.
+    #            it in the tree dump. THe dash.json was
+    #            created by the user.
     # ------------------------------------------------
         $ {2} status -v
-        $ {2} {0} -j dash.json -g 4600 -D CUSTOM_DS=myprojectpg
+        $ {2} {0} -j dash.json -u -g 4600 -D CUSTOM_DS=myprojectpg
         $ {2} tree -g 4600
 
     # ------------------------------------------------
@@ -199,57 +107,7 @@ def read_raw_json(opts: argparse.Namespace) -> dict:
         dash: The initial JSON dashboard. It is guaranteed to be a dict.
     '''
     info(f'reading {opts.json}')
-    value = {}
-    try:
-        with open(opts.json) as ifp:
-            data = ifp.read()
-            if data.startswith('['):
-                err(f'input dashboard json file is a list not a map: "{opts.json}"')
-            if not data.startswith('{'):
-                # It must be a dictionary.
-                err(f'input dashboard json file is not a map: "{opts.json}"')
-        value = json.loads(data)
-    except FileNotFoundError:
-        err(f'input dashboard json file does not exist: "{opts.json}"')
-    except json.decoder.JSONDecodeError as exc:
-        err(f'input dashboard json file is invalid: "{opts.json}" - {exc}')
-    return value
-
-
-def read_template(opts: argparse.Namespace) -> dict:
-    '''Read the dashboard template.
-
-    This template contains the wrapper and variable
-    settings (as code) that are used to augment the
-    data.
-
-    See the comments for the DEFAULT_TEMPLATE for
-    more details about the structure.
-
-    Args:
-        opts: The command line arguments.
-
-    Returns:
-        template: The template.
-    '''
-    path = opts.template
-    if not path:
-        info('using default internal template')
-        template = DEFAULT_TEMPLATE
-    else:
-        info(f'reading {opts.template}')
-        try:
-            with open(path) as ifp:
-                template = json.load(ifp)
-        except FileNotFoundError:
-            err(f'dashboard template file does not exist: "{opts.template}"')
-        except json.decoder.JSONDecodeError as exc:
-            err(f'dashboard template file is invalid: "{opts.template}" - {exc}')
-    if 'wrapper' not in template:
-        err('missing expected key in the template')
-    if 'datasource' not in template:
-        err('missing expected key in the template')
-    return template
+    return read_json_dict_from_file(opts.json)
 
 
 def setvar(data: Any, name: str, value: Any) -> Any:
@@ -372,11 +230,14 @@ def setvars(opts: argparse.Namespace, dash: dict, template: dict) -> dict:
         return new_dash
 
     # Create the variable scaffolding.
-    if 'templating' not in new_dash:
+    vkey0 = template['meta']['vkey0']
+    vkey1 = template['meta']['vkey1']
+    if vkey0 not in new_dash:
         # Add the variable scaffolding.
-        new_dash['templating'] = {
-            'list': []
+        new_dash[vkey0] = {
+            vkey1: []
         }
+    assert vkey1 in new_dash[vkey0]
 
     # Process all of the command line variables.
     tds = template['datasource']
@@ -392,27 +253,10 @@ def setvars(opts: argparse.Namespace, dash: dict, template: dict) -> dict:
         # Always insert at the beginning of the list.
         # This O(N) operation is okay because the list
         # is typically very small.
-        new_dash['dashboard']['templating']['list'].insert(0, new_var)
+        new_dash['dashboard'][vkey0][vkey1].insert(0, new_var)
 
     debug(f'new_dash:\n{json.dumps(new_dash, indent=4, sort_keys=True)}')
     return new_dash
-
-
-def dump_new_dash(opts: argparse.Namespace, dash: dict):
-    '''Dump new dash.
-
-    This is only done if -f is specified.
-
-    Args:
-        opts: The command line arguments.
-        dash: The unwrapped initial dashboard.
-    '''
-    if not opts.fname:
-        return
-    info(f'writing updated dashboard JSON to {opts.fname}')
-    with open(opts.fname, 'w') as ofp:
-        string = json.dumps(dash, indent=4, sort_keys=True)
-        ofp.write(string + '\n')
 
 
 def write_to_grafana(opts: argparse.Namespace, dash: dict):
@@ -453,7 +297,10 @@ def main():
 
     This is the command line entry point for the dash command.
 
-    Import a JSON description of a dashboard.
+    Add scaffolding to a grafana JSON dashboard description extracted
+    from an internal server so that it can be imported into a local
+    grafana server for updating. It does this by adding scaffolding to
+    make it importable.
     '''
     opts = getopts()
     initv(opts.verbose)
@@ -462,6 +309,6 @@ def main():
     dash = read_raw_json(opts)
     new_dash = wrapit(dash, template)
     new_dash = setvars(opts, new_dash, template)
-    dump_new_dash(opts, new_dash)
+    write_dash(opts, new_dash)
     write_to_grafana(opts, new_dash)
     info('done')
