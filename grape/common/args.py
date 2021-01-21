@@ -2,8 +2,10 @@
 Common args support.
 '''
 import argparse
-from grape import __version__
+import json
 
+from grape import __version__
+from grape.common.dashio import DEFAULT_TEMPLATE
 
 CLI  = 'grape'
 DEFAULT_NAME = 'grapex01'
@@ -28,7 +30,7 @@ def args_get_text(string: str):
     return lookup.get(string, string)
 
 
-def add_common_args(parser: argparse.ArgumentParser, *enable: str):
+def add_common_args(parser: argparse.ArgumentParser, *enable: str):  # pylint: disable=too-many-branches
     '''Add command line arguments that are common to all tools.
 
     Managing the arguments in a single place guarantees consistent
@@ -38,6 +40,16 @@ def add_common_args(parser: argparse.ArgumentParser, *enable: str):
         parser - The parser object.
         enable: The options to enable.
     '''
+    if '-d' in enable:
+        parser.add_argument('-d', '--dashboard-id',
+                            action='store',
+                            type=str,
+                            dest='dashid',
+                            metavar=('DASHBOARD_ID'),
+                            help='''\
+Specify the dashboard id.
+ ''')
+
     if '-D' in enable:
         parser.add_argument('-D', '--define-variable',
                             action='append',
@@ -75,6 +87,7 @@ If not specified the default is the BASE.zip.
                             action='store',
                             type=int,
                             default=4600,
+                            metavar=('PORT'),
                             help='''\
 The grafana server host interface port.
 This is the port that allows access
@@ -90,7 +103,15 @@ The default is %(default)s.
                             type=int,
                             default=3,
                             help='''\
-Indent level.
+Indent level for reporting.
+
+For the tree command it defines the
+indent level for the report.
+
+For the dasin command it defines the
+indent level of the JSON output for
+the -f option.
+
 Default is %(default)s.
  ''')
 
@@ -151,11 +172,20 @@ Sort the tree data.
 
     if '-t' in enable:
         # This one is used by dashin and dashout.
+        tmpl = json.dumps(DEFAULT_TEMPLATE, indent=2)
         parser.add_argument('-t', '--template',
                             action='store',
                             default='',
-                            help='''\
+                            help=f'''\
 The dashin/dashout template data.
+
+The variables in the template are:
+    {{DASH}}  The dashboard JSON.
+    {{PGDS}}  The name of the grape data source.
+    {{PGNM}}  The name of the grape data source variable.
+
+The default template looks like this:
+{tmpl}
  ''')
 
     if '-u' in enable:
