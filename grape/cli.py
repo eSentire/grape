@@ -58,12 +58,12 @@ COMMANDS:
                 This command is useful for importing a single dashboard
                 into a local grape project for maintenance.
 
-    dashout     Export a single dashboard from a grafana server into
-                a local JSON file for import into an external grafana
-                server.
+    dashout     Export a single dashboard from an external grafana
+                server into a local JSON file for import into an
+                external grafana server.
 
-                This command is useful for exporting a single dashboards
-                to an external grafana server.
+                This command is useful for exporting a single local
+                dashboard to an external grafana server.
 
     delete      The delete operation deletes all artifacts created
                 by the create operation.
