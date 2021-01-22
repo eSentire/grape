@@ -29,6 +29,7 @@ Grafana Prototyping Environment
    1. [Postres](#postgres)
    1. [pgAdmin](#pgadmin)
    1. [runpga.sh](#runpgash)
+   1. [grape-upload-json-dashboard.sh](#grape-upload-json-dashboardsh)
 1. [Acknowledgments](#acknowledgments)
 
 </details>
@@ -452,6 +453,29 @@ $ tools/runpga.sh demo01pg
 
 When it completes it prints out the information necessary to
 login into the pgAdmin and connect to the database.
+
+
+#### grape-upload-json-dashboard.sh
+There is a script called `tools/upload-json-dashboard.sh` that will upload
+a JSON dashboard to a Grafana server from the command line.
+
+The upload is limited to servers with simple authentication based on a
+username and password unless you override it using `-x` and `-n`.
+
+The local dashboard JSON file is creatined by exporting the dashboard
+from the Grafana UI with the "Export for sharing externally" checkbox
+checked.
+
+This script is useful for transferring dashboards from one server to
+another which is handy in cases where there is the development server
+is separate from the release server.
+
+Although the same function can be accomplished in the UI, this script
+allows updates to be automated in a build.
+
+This script requires that "curl" is installed.
+
+See the script help (`-h`) for more information and examples.
 
 
 ### Acknowledgments
