@@ -24,7 +24,8 @@ DESCRIPTION
     Uploads a local dashboard JSON file to another Grafana server.
 
     The upload is limited to servers with simple authentication based
-    on a username and password.
+    on a username and password unless you override it using "-x" and
+    "-n".
 
     The local dashboard JSON file is creatined by exporting the
     dashboard from the Grafana UI with the "Export for sharing
