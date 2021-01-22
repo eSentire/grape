@@ -13,8 +13,17 @@ schemes (usernames, passwords, roles, etc.) that might exist for any
 external grafana server. This system understands how to interact with
 grape grafana servers for authn/z. It does not know how to interact
 with other grafana servers for authn/z.
+
+In the future we could consider supporting access to an external
+service by incorporating a conf file like that used in the
+import/export commands.
+
+When a user exports a dashboard from the grafana they must
+check the "Export for sharing externally" checkbox for this
+to work.
 '''
 import argparse
+import copy
 import json
 import os
 import sys
@@ -189,6 +198,48 @@ def wrapit(dash: dict, template: dict) -> dict:
     return updated
 
 
+def fix_id_fields(dash: dict):
+    '''Fix the top level variables.
+
+    Specifically: fix the id and uid.
+
+    Args:
+        dash: The new dashboard.
+    '''
+    if 'id' in dash:
+        dash['id'] = None
+    if 'uid' in dash:
+        dash['uid'] = None
+
+
+def load_ds_vars(dash: dict, template: dict) -> dict:
+    '''Load the datasource variables.
+
+    These are the variables that were defined by the grafana export
+    operation when the user selected the "Export for sharing externally"
+    checkbox.
+
+    Args:
+        dash: The new dashboard.
+        template: The template.
+
+    Returns:
+        vars: The variables defined in the dashboard.
+    '''
+    dkey = template['meta']['dkey']
+    dsvars = {}
+    if dkey in dash:
+        ddash = dash[dkey]
+        if '__inputs' in ddash:
+            for var in ddash['__inputs']:
+                if var['type'] == 'datasource':
+                    key = var['name']
+                    value = var['pluginName']
+                    dsvars[key] = value
+                    info(f'   found datasource variable in {dkey}: {key}="{value}"')
+    return dsvars
+
+
 def setvars(opts: argparse.Namespace, dash: dict, template: dict) -> dict:
     '''Set the variable values.
 
@@ -203,26 +254,9 @@ def setvars(opts: argparse.Namespace, dash: dict, template: dict) -> dict:
         dash: The updated dashboard.
     '''
     info('setting the variables')
-    new_dash = dash
-
-    # Fix the id and uid.
-    if 'id' in new_dash:
-        new_dash['id'] = None
-    if 'uid' in new_dash:
-        new_dash['uid'] = None
-
-    # Load the datasource variables.
-    dsvars = {}
-    if 'dashboard' in dash:
-        ddash = dash['dashboard']
-        if '__inputs' in ddash:
-            for var in ddash['__inputs']:
-                if var['type'] == 'datasource':
-                    key = var['name']
-                    value = var['pluginName']
-                    dsvars[key] = value
-                    info(f'   found datasource variable in dashboard: {key}="{value}"')
-
+    new_dash = copy.deepcopy(dash)
+    fix_id_fields(new_dash)
+    dsvars = load_ds_vars(new_dash, template)
     if not opts.vardefs:
         # No variables defined.
         if dsvars:
@@ -230,14 +264,17 @@ def setvars(opts: argparse.Namespace, dash: dict, template: dict) -> dict:
         return new_dash
 
     # Create the variable scaffolding.
+    dkey = template['meta']['dkey']
     vkey0 = template['meta']['vkey0']
     vkey1 = template['meta']['vkey1']
-    if vkey0 not in new_dash:
+    if vkey0 not in new_dash[dkey]:
         # Add the variable scaffolding.
-        new_dash[vkey0] = {
+        # This assumes very defined structure.
+        # Not sure how wise that assumption is.
+        new_dash[dkey][vkey0] = {
             vkey1: []
         }
-    assert vkey1 in new_dash[vkey0]
+    assert vkey1 in new_dash[dkey][vkey0]
 
     # Process all of the command line variables.
     tds = template['datasource']
@@ -253,7 +290,7 @@ def setvars(opts: argparse.Namespace, dash: dict, template: dict) -> dict:
         # Always insert at the beginning of the list.
         # This O(N) operation is okay because the list
         # is typically very small.
-        new_dash['dashboard'][vkey0][vkey1].insert(0, new_var)
+        new_dash[dkey][vkey0][vkey1].insert(0, new_var)
 
     debug(f'new_dash:\n{json.dumps(new_dash, indent=4, sort_keys=True)}')
     return new_dash

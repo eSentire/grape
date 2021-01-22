@@ -13,6 +13,14 @@ schemes (usernames, passwords, roles, etc.) that might exist for any
 external grafana server. This system understands how to interact with
 grape grafana servers for authn/z. It does not know how to interact
 with other grafana servers for authn/z.
+
+In the future we could consider supporting access to an external
+service by incorporating a conf file like that used in the
+import/export commands.
+
+When a user exports a dashboard from the grafana they must
+check the "Export for sharing externally" checkbox for this
+to work.
 '''
 import argparse
 import os
