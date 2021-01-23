@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2059
 #
 # This can be customized from the command line by setting the variable
 # values like this if jq is installed.
@@ -47,6 +48,9 @@ DESCRIPTION
 OPTIONS
     -d NAME     The Grafana data source name.
 
+    -f INT      The Grafana dashboard parent folder id.
+                If not specified, the top level is assumed.
+
     -g PORT     The Grafana URL prefix.
                 An example might be something like:
                     http://localhost:6300
@@ -73,7 +77,7 @@ OPTIONS
 
     -v          Increase the level of verbosity.
 
-    -x STRING   Add extra arguments.
+    -x STRING   Add extra curl arguments.
 
 EXAMPLES
     # Example 1.
@@ -100,26 +104,35 @@ EOF
 }
 
 # ================================================================
+# Constants.
+# ================================================================
+ERRFMT='\x1b[31mERROR:%d: %s\x1b[0m\n'
+
+# ================================================================
 # Command line argument processing.
 # ================================================================
 set -e
 DASH_AUTH=1
-DASH_USERNAME='admin'
-DASH_PASSWORD='admin'
+DASH_DS=
+DASH_EXTRA_CURL=()
+DASH_FOLDER=0
 DASH_JSON=
 DASH_NAME=
-DASH_DS=
+DASH_PASSWORD='admin'
+DASH_USERNAME='admin'
 DASH_URL=
-DASH_EXTRA=()
 VERBOSE=0
 
-while getopts ':hd:g:j:n:Np:Pu:vx:' options ; do
+while getopts ':f:hd:g:j:n:Np:Pu:vx:' options ; do
     case ${options} in
         h )
             _help
             ;;
         d )
             DASH_DS=${OPTARG}
+            ;;
+        f )
+            DASH_FOLDER=${OPTARG}
             ;;
         g )
             DASH_URL=${OPTARG}
@@ -147,10 +160,10 @@ while getopts ':hd:g:j:n:Np:Pu:vx:' options ; do
             VERBOSE=$(( VERBOSE + 1 ))
             ;;
         x )
-            DASH_EXTRA=("${OPTARG//[ ]/}")
+            DASH_EXTRA_CURL=("${OPTARG//[ ]/}")
             ;;
         '?' )
-            printf '\x1b[31mERROR:%d: %s\x1b[0m\n' $LINENO "invalid option: -$OPTARG" 1>&2
+            printf "$ERRFMT" $LINENO "invalid option: -$OPTARG" 1>&2
             exit 1
             ;;
     esac
@@ -170,7 +183,7 @@ fi
 BASH_MAJOR=$(echo "$BASH_VERSION" | awk -F. '{print $1}')
 if (( BASH_MAJOR < 4 )) ; then
     # Need 4 or later to support "declare -A".
-    printf '\x1b[31mERROR:%d: %s\x1b[0m\n' $LINENO "this version of bash is too old, must 4 or later: $BASH_VERSION" 1>&2
+    printf "$ERRFMT" $LINENO "this version of bash is too old, must 4 or later: $BASH_VERSION" 1>&2
     exit 1
 fi
 
@@ -179,7 +192,7 @@ declare -A ROPTS=( ['-d']="$DASH_DS" ['-j']="$DASH_JSON" ['-g']="$DASH_URL" ['-n
 for RKEY in "${!ROPTS[@]}" ; do
     RVAL=${ROPTS[$RKEY]}
     if [ -z "$RVAL" ] ; then
-        printf '\x1b[31mERROR:%d: %s\x1b[0m\n' \
+        printf "$ERRFMT" \
                $LINENO \
                "missing required option: '$RKEY', see the help (-h) for more information" \
                1>&2
@@ -194,15 +207,16 @@ if (( ERRCNT )) ; then exit 1 ; fi
 if (( VERBOSE )) ; then
     cat <<EOF
 Setup
-    BASH_VERSION  : $BASH_VERSION
-    DASH_AUTH     : $DASH_AUTH
-    DASH_DS       : $DASH_DS
-    DASH_JSON     : $DASH_JSON
-    DASH_NAME     : $DASH_NAME
-    DASH_URL      : $DASH_URL
-    DASH_USERNAME : $DASH_USERNAME
-    DASH_EXTRA    : ${DASH_EXTRA[@]}
-    VERBOSE       : $VERBOSE
+    BASH_VERSION    : $BASH_VERSION
+    DASH_AUTH       : $DASH_AUTH
+    DASH_DS         : $DASH_DS
+    DASH_FOLDER     : $DASH_FOLDER
+    DASH_JSON       : $DASH_JSON
+    DASH_NAME       : $DASH_NAME
+    DASH_URL        : $DASH_URL
+    DASH_USERNAME   : $DASH_USERNAME
+    DASH_EXTRA_CURL : ${DASH_EXTRA_CURL[@]}
+    VERBOSE         : $VERBOSE
 EOF
 fi
 
@@ -210,11 +224,15 @@ fi
 # Other prerequisite checks.
 # ================================================================
 if [ ! -f "$DASH_JSON" ] ; then
-    printf '\x1b[31mERROR:%d: %s\x1b[0m\n' $LINENO "file does not exist: $DASH_JSON" 1>&2
+    printf "$ERRFMT" $LINENO "file does not exist: $DASH_JSON" 1>&2
+    exit 1
+fi
+if ! grep '"__inputs"' "$DASH_JSON" 1>/dev/null 2>/dev/null ; then
+    printf "$ERRFMT" $LINENO "missing required record '__inputs' in $DASH_JSON" 1>&2
     exit 1
 fi
 if ! curl --version --version 1>/dev/null 2>/dev/null ; then
-    printf '\x1b[31mERROR:%d: %s\x1b[0m\n' $LINENO "curl is not installed, cannot continue" 1>&2
+    printf "$ERRFMT" $LINENO "curl is not installed, cannot continue" 1>&2
     exit 1
 fi
 
@@ -238,6 +256,7 @@ cat >x.json <<EOF
     "value": "${DASH_DS}"
   }],
   "dashboard": $(cat "${DASH_JSON}"),
+  "folderId': ${FOLDER_ID}",
   "overwrite": true
 }
 EOF
@@ -251,7 +270,7 @@ else
     AUTH=()
 fi
 if (( VERBOSE )) ; then set -x ; fi
-curl "${AUTH[@]}" "${DASH_EXTRA[@]}" \
+curl "${AUTH[@]}" "${DASH_EXTRA_CURL[@]}" \
      -s \
      -k \
      -X POST \
