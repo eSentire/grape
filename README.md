@@ -29,7 +29,7 @@ Grafana Prototyping Environment
    1. [Postres](#postgres)
    1. [pgAdmin](#pgadmin)
    1. [runpga.sh](#runpgash)
-   1. [grape-upload-json-dashboard.sh](#grape-upload-json-dashboardsh)
+   1. [upload-json-dashboard.sh](#upload-json-dashboardsh)
 1. [Acknowledgments](#acknowledgments)
 
 </details>
@@ -455,7 +455,7 @@ When it completes it prints out the information necessary to
 login into the pgAdmin and connect to the database.
 
 
-#### grape-upload-json-dashboard.sh
+#### upload-json-dashboard.sh
 There is a script called `tools/upload-json-dashboard.sh` that will upload
 a JSON dashboard to a Grafana server from the command line.
 

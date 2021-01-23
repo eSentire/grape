@@ -3,7 +3,7 @@
 # This can be customized from the command line
 # by setting the variable values like this:
 #
-#   $ ./grape-upload-json-dashboard.sh -j external.json -d mypg -g 6300
+#   $ ./upload-json-dashboard.sh -j external.json -d mypg -g 6300
 #
 # Help is available, by specifying the -h option.
 #
