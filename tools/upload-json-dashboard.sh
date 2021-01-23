@@ -256,7 +256,7 @@ cat >x.json <<EOF
     "value": "${DASH_DS}"
   }],
   "dashboard": $(cat "${DASH_JSON}"),
-  "folderId': ${FOLDER_ID}",
+  "folderId": ${DASH_FOLDER},
   "overwrite": true
 }
 EOF
