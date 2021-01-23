@@ -20,6 +20,9 @@ To run the demo:
 $ ./run.sh
 ```
 
+> Note that this script uses `grape/tools/upload-json-dashboard.sh`
+> to load the dashboard into the server.
+
 ### Result
 When the run has completed, you will be able navigate to
 http://localhost:4410 to see the newly created dashboard.
@@ -74,6 +77,8 @@ Here is an example run:
    $ ./etl.py raw.csv raw_table > raw.sql
 ```
 
+It is very useful for translating generic CSV data to SQL.
+
 ### SQL Query
 The SQL query used for the time series graph looks like this:
 ```sql
@@ -114,6 +119,6 @@ ORDER BY
   expected_deaths,
   unexpected_deaths,
   uncounted_deaths,
-  non_covid_deaths, 
+  non_covid_deaths,
   covid_deaths ASC
 ```
