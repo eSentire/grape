@@ -36,8 +36,8 @@ set -x
 # time range.
 #printf '\x1b[35mINFO:%d: %s\x1b[0m\n' $LINENO 'download the raw csv data'
 #set -x
-#curl -s -L 'https://raw.githubusercontent.com/TheEconomist/covid-19-excess-deaths-tracker/master/output-data/excess-deaths/all_weekly_excess_deaths.csv' \
-#--out all_weekly_excess_deaths.csv
+#curl -L 'https://raw.githubusercontent.com/TheEconomist/covid-19-excess-deaths-tracker/master/output-data/excess-deaths/all_weekly_excess_deaths.csv' \
+#-o all_weekly_excess_deaths.csv
 #{ set +x; } 2>/dev/null
 
 printf '\x1b[35mINFO:%d: %s\x1b[0m\n' $LINENO 'create the local grafana service'
@@ -49,32 +49,18 @@ pipenv run grape create -v -n $NAME -g $PORT
 
 # Use all_weekly_excess_deaths.csv
 # The pipenv run python etl.py was added to fix a windows issue.
+# This uses the upload-json-dashboard.sh tool to populate the dashboard.
 printf '\x1b[35mINFO:%d: %s\x1b[0m\n' $LINENO 'populate database tables and views'
 set -x
-pipenv run python etl.py
+pipenv run python etl.py all_weekly_excess_deaths.csv all_weekly_excess_deaths > demo02pg/mnt/all_weekly_excess_deaths.sql
+docker exec -it ${NAME}pg psql -U postgres -d postgres -f /mnt/all_weekly_excess_deaths.sql
 docker exec -it ${NAME}pg psql -U postgres -d postgres -c '\d'
-#docker exec -it ${NAME}pg psql -U postgres -d postgres -c '\dS+ all_weekly_excess_deaths'
-#docker exec -it ${NAME}pg psql -U postgres -d postgres -c '\dS+ all_weekly_excess_deaths_view'
+docker exec -it ${NAME}pg psql -U postgres -d postgres -c '\dS+ all_weekly_excess_deaths'
 { set +x; } 2>/dev/null
 
-printf '\x1b[35mINFO:%d: %s\x1b[0m\n' $LINENO 'grab the grafana configuration'
+printf '\x1b[35mINFO:%d: %s\x1b[0m\n' $LINENO 'upload the dashboard'
 set -x
-pipenv run grape save -v -n $NAME -g $PORT -f $NAME.zip
-unzip -l $NAME.zip
-{ set +x; } 2>/dev/null
-
-printf '\x1b[35mINFO:%d: %s\x1b[0m\n' $LINENO 'update with the dashboard data'
-set -x
-unzip -l $NAME.zip
-unzip -p $NAME.zip gr.json > gr.json
-cp grafana.json gr.json
-zip $NAME.zip gr.json
-unzip -l $NAME.zip
-{ set +x; } 2>/dev/null
-
-printf '\x1b[35mINFO:%d: %s\x1b[0m\n' $LINENO 'upload the modified dashboard'
-set -x
-pipenv run grape load -v -n $NAME -g $PORT -f $NAME.zip
+../../tools/upload-json-dashboard.sh -j dash.json -d "${NAME}pg" -g "http://localhost:${PORT}"
 { set +x; } 2>/dev/null
 
 printf '\x1b[35mINFO:%d: %s\x1b[0m\n' $LINENO 'done'

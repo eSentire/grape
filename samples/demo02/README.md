@@ -11,6 +11,7 @@ modify it. In the sample the modification comes from the `grafana.json`
 file and the `etl.py` tool that converts the downloaded data to database
 tables and views.
 
+### How to run it
 In an interactive environment you would mostly likely make all of the
 changes in grafana and the database directly.
 
@@ -19,12 +20,14 @@ To run the demo:
 $ ./run.sh
 ```
 
+### Result
 When the run has completed, you will be able navigate to
 http://localhost:4410 to see the newly created dashboard.
 
 It looks like this:
 !['demo02'](/img/demo02.png)
 
+### Discussion
 This demo analyzes an open-source dataset from the Economist that
 allows it to grab information about COVID-19 mortality along with
 information about excess deaths. It then uses that information to
@@ -44,7 +47,73 @@ This document only shows simple time series data in the graph but be
 aware that you can include moving averages and other trend analysis by
 creating appropriate SQL queries.
 
+### Raw Data
 The raw data in `all_weekly_excess_deaths.csv` was manually
 downloaded from
 [this](https://raw.githubusercontent.com/TheEconomist/covid-19-excess-deaths-tracker/master/output-data/excess-deaths/all_weekly_excess_deaths.csv)
 site.
+
+### ETL
+The `etl.py` program is pretty interesting because it, for the most part,
+parses a generic CSV file with a single header row and creates a database
+table by analyzing the data.
+
+There is one non-generic hack, if it sees a `NA` in a column that
+is otherwise a number, it will set the value to zero.
+
+Here is how it is run: `./etl.py CSV_FILE [TABLE_NAME] > [SQL_FILE]`.
+
+Where `CSV_FILE` is the name of the CSV file and `TABLE_NAME` is the
+name of the SQL table. If the `TABLE_NAME` is not specified, the
+file name root is used.
+
+The SQL is output to stdout.
+
+Here is an example run:
+```bash
+   $ ./etl.py raw.csv raw_table > raw.sql
+```
+
+### SQL Query
+The SQL query used for the time series graph looks like this:
+```sql
+WITH bigtime AS
+  (SELECT
+    *,
+    to_date(year::text || ' ' || week::text, 'IYYYIW') AS time,
+    -- uncounted_deaths is the number of unexpected deaths minus the covid_deaths
+    -- which assumes that all covid death are unexpected
+    -- if total_deaths < expected_deaths then this is not accurate
+    total_deaths - expected_deaths as unexpected_deaths,
+    greatest(total_deaths - expected_deaths - covid_deaths, 0) as uncounted_deaths
+    FROM all_weekly_excess_deaths)
+SELECT
+  $__timeGroup(time, '1w'),
+--  total_deaths as "Total Deaths",
+--  expected_deaths as "Expected Deaths",
+  covid_deaths as "COVID Deaths Reported",
+  uncounted_deaths as "COVID Deaths Not Reported",
+  'weekly:' as metric
+FROM
+  bigtime
+WHERE
+  $__timeFilter(time)
+  AND country in ($country)
+  AND region in ($region)
+GROUP BY
+  time,
+  total_deaths,
+  expected_deaths,
+  unexpected_deaths,
+  uncounted_deaths,
+  non_covid_deaths,
+  covid_deaths
+ORDER BY
+  time,
+  total_deaths,
+  expected_deaths,
+  unexpected_deaths,
+  uncounted_deaths,
+  non_covid_deaths, 
+  covid_deaths ASC
+```
