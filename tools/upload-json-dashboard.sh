@@ -26,22 +26,21 @@ USAGE
     $0 -h
 
 DESCRIPTION
-    Uploads a local dashboard JSON file to another Grafana server.
+    Uploads a dashboard JSON file to a Grafana server.
 
     The upload is limited to servers with simple authentication based
     on a username and password unless you override it using "-x" and
     "-n".
 
-    The local dashboard JSON file is creatined by exporting the
+    The local dashboard JSON file is created by exporting the
     dashboard from the Grafana UI with the "Export for sharing
     externally" checkbox checked.
 
     This script is useful for transferring dashboards from one server
-    to another which is handy in cases where there is the development
-    server is separate from the release server.
+    to another.
 
     Although the same function can be accomplished in the UI, this
-    script allows updates to be automated in a build.
+    script allows updates to be automated from the command line.
 
     This script requires that "curl" is installed.
 
@@ -56,6 +55,9 @@ OPTIONS
                     http://localhost:6300
 
     -h          This help message.
+
+    -i NAME     The plugin id.
+                The default is 'postgres'
 
     -j FILE     The dashboard JSON file to upload.
 
@@ -118,12 +120,13 @@ DASH_EXTRA_CURL=()
 DASH_FOLDER=0
 DASH_JSON=
 DASH_NAME=
+DASH_PLUGIN='postgres'
 DASH_PASSWORD='admin'
 DASH_USERNAME='admin'
 DASH_URL=
 VERBOSE=0
 
-while getopts ':f:hd:g:j:n:Np:Pu:vx:' options ; do
+while getopts ':f:hd:g:i:j:n:Np:Pu:vx:' options ; do
     case ${options} in
         h )
             _help
@@ -136,6 +139,9 @@ while getopts ':f:hd:g:j:n:Np:Pu:vx:' options ; do
             ;;
         g )
             DASH_URL=${OPTARG}
+            ;;
+        i )
+            DASH_PLUGIN=${OPTARG}
             ;;
         j )
             DASH_JSON=${OPTARG}
@@ -174,7 +180,7 @@ shift $((OPTIND -1))
 # Check required options.
 # ================================================================
 if [ -n "$DASH_JSON" ] && [ -z "$DASH_NAME" ] ; then
-    if jq --version 1>/dev/null 2>/dev/null ; then
+    if jq --version &>/dev/null ; then
         # If jq is available, extract the variable name.
         DASH_NAME=$(jq '.__inputs[0].name' "$DASH_JSON" | awk -F'"' '{print $2}')
     fi
@@ -183,7 +189,7 @@ fi
 BASH_MAJOR=$(echo "$BASH_VERSION" | awk -F. '{print $1}')
 if (( BASH_MAJOR < 4 )) ; then
     # Need 4 or later to support "declare -A".
-    printf "$ERRFMT" $LINENO "this version of bash is too old, must 4 or later: $BASH_VERSION" 1>&2
+    printf "$ERRFMT" $LINENO "this version of bash is too old, must be 4 or later: $BASH_VERSION" 1>&2
     exit 1
 fi
 
@@ -227,11 +233,11 @@ if [ ! -f "$DASH_JSON" ] ; then
     printf "$ERRFMT" $LINENO "file does not exist: $DASH_JSON" 1>&2
     exit 1
 fi
-if ! grep '"__inputs"' "$DASH_JSON" 1>/dev/null 2>/dev/null ; then
+if ! grep '"__inputs"' "$DASH_JSON" &>/dev/null ; then
     printf "$ERRFMT" $LINENO "missing required record '__inputs' in $DASH_JSON" 1>&2
     exit 1
 fi
-if ! curl --version --version 1>/dev/null 2>/dev/null ; then
+if ! curl --version --version &>/dev/null ; then
     printf "$ERRFMT" $LINENO "curl is not installed, cannot continue" 1>&2
     exit 1
 fi
@@ -241,7 +247,7 @@ fi
 #
 # Note the the "inputs" record MUST appear before the "dashboard"
 # record because the import operation picks up the first input
-# specification and ignores the reas.
+# specification and ignores the rest.
 #
 # This is relevant because the inputs described below references the
 # correct the datasource where are the __inputs in the dashboard
@@ -252,7 +258,7 @@ cat >x.json <<EOF
   "inputs": [{
     "name": "${DASH_NAME}",
     "type": "datasource",
-    "pluginId": "postgres",
+    "pluginId": "${DASH_PLUGIN}",
     "value": "${DASH_DS}"
   }],
   "dashboard": $(cat "${DASH_JSON}"),
