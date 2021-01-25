@@ -237,7 +237,7 @@ if ! grep '"__inputs"' "$DASH_JSON" &>/dev/null ; then
     printf "$ERRFMT" $LINENO "missing required record '__inputs' in $DASH_JSON" 1>&2
     exit 1
 fi
-if ! curl --version --version &>/dev/null ; then
+if ! curl --version &>/dev/null ; then
     printf "$ERRFMT" $LINENO "curl is not installed, cannot continue" 1>&2
     exit 1
 fi
@@ -249,9 +249,13 @@ fi
 # record because the import operation picks up the first input
 # specification and ignores the rest.
 #
-# This is relevant because the inputs described below references the
-# correct the datasource where are the __inputs in the dashboard
-# record reference the old, incorrect datasource.
+# This is relevant because there are two sources of external variable
+# definitions in the dashboard description. The first is the "inputs"
+# record at the top level (shown below) and the other is the
+# "__inputs" record under each dashboard (not shown) which is created
+# by Grafana when it exports the dashboard. The top level definition
+# overrides all subsequent low level definitions which is why it must
+# appear first.
 # ================================================================
 cat >x.json <<EOF
 {
