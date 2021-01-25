@@ -237,7 +237,7 @@ if ! grep '"__inputs"' "$DASH_JSON" &>/dev/null ; then
     printf "$ERRFMT" $LINENO "missing required record '__inputs' in $DASH_JSON" 1>&2
     exit 1
 fi
-if ! curl --version --version &>/dev/null ; then
+if ! curl --version &>/dev/null ; then
     printf "$ERRFMT" $LINENO "curl is not installed, cannot continue" 1>&2
     exit 1
 fi
