@@ -466,12 +466,11 @@ The local dashboard JSON file is creatined by exporting the dashboard
 from the Grafana UI with the "Export for sharing externally" checkbox
 checked.
 
-This script is useful for transferring dashboards from one server to
-another which is handy in cases where there is the development server
-is separate from the release server.
+This script is useful for transferring a single dashboard from one
+server to another.
 
 Although the same function can be accomplished in the UI, this script
-allows updates to be automated in a build.
+allows updates to be automated from the command line.
 
 This script requires that "curl" is installed.
 
