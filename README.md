@@ -20,7 +20,7 @@ Grafana Prototyping Environment
 1. [Status](#status)
 1. [Tree](#tree)
 1. [Tools](#tools)
-   1. [csv2sql.sh](#csv2sqlsh)
+   1. [csv2sql.py](#csv2sqlpy)
    1. [runpga.sh](#runpgash)
    1. [upload-json-dashboard.sh](#upload-json-dashboardsh)
 1. [Samples](#samples)
@@ -328,6 +328,10 @@ jbhgr:4640
 
 
 ### Tools
+This section describes the tools in the local `tools` directory. They
+are not integrated into `grape` at this time because they are don't
+fit the grape idiom but that is a completely subjective decision
+and may be revisitied in the future.
 
 
 #### csv2sql.py
