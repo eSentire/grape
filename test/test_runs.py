@@ -528,8 +528,8 @@ def test_run_runpga(name: str):
     debug(f'container={namepg}')
     proc = Popen([path, namepg], stdout=PIPE, stderr=PIPE)
     out, err = proc.communicate()
-    debug(f'out=[{len(out)}]<<<{out}>>>')
-    debug(f'err=[{len(err)}]<<<{err}>>>')
+    debug(f'out=[{len(out)}]<<<{repr(out)}>>>')
+    debug(f'err=[{len(err)}]<<<{repr(err)}>>>')
     assert proc.returncode == 0
 
     # Make sure that the container was created.
@@ -560,7 +560,7 @@ def test_run_runpga(name: str):
     'name,gport',
     [
         (NAME, GPORT),
-    ],
+    ],  # pylint: disable=too-many-locals
 )
 def test_run_dash_import_csv(capsys, name: str, gport: int):
     '''Verify that the dashboard csv import idiom works.
@@ -578,13 +578,15 @@ def test_run_dash_import_csv(capsys, name: str, gport: int):
         name: The grape project name for this test.
         gport: The grafana port for this test.
     '''
-    namegr, namepg, _namezp = make_names(name)
+    _namegr, namepg, _namezp = make_names(name)
     testdir = pathlib.Path(__file__).parent.absolute()
     csvfile = os.path.join(testdir, 'test_run_dash_import_csv.csv')
     dashfile = os.path.join(testdir, 'test_run_dash_import_csv.json')
-    script1 = os.path.join(pathlib.Path(__file__).parent.parent.absolute(), 'tools', 'csv2sql.py')
-    script2 = os.path.join(pathlib.Path(__file__).parent.parent.absolute(), 'tools', 'upload-json-dashboard.sh')
-    
+    script1 = os.path.join(pathlib.Path(__file__).parent.parent.absolute(),
+                           'tools', 'csv2sql.py')
+    script2 = os.path.join(pathlib.Path(__file__).parent.parent.absolute(),
+                           'tools', 'upload-json-dashboard.sh')
+
     debug(f'namepg  : {namepg}')
     debug(f'gport   : {gport}')
     debug(f'testdir : {testdir}')
@@ -604,17 +606,21 @@ def test_run_dash_import_csv(capsys, name: str, gport: int):
         assert os.path.exists(path)
         proc = Popen([path, '-h'], stdout=PIPE, stderr=PIPE)
         out, err = proc.communicate()
-        debug(f'out=[{len(out)}]<<<{out}>>>')
-        debug(f'err=[{len(err)}]<<<{err}>>>')
+        debug(f'out=[{len(out)}]<<<{repr(out)}>>>')
+        debug(f'err=[{len(err)}]<<<{repr(err)}>>>')
         assert proc.returncode == 0
 
     # Create the SQL file with the correct file.
     sqlfile = os.path.join(testdir, namepg, 'mnt', 'test_run_dash_import_csv.sql')
     debug(f'sqlfile={sqlfile}')
-    proc = Popen([script1, '-v', '-t', 'all_weekly_excess_deaths', '-o', sqlfile, csvfile], stdout=PIPE, stderr=PIPE)
+    proc = Popen([script1,
+                  '-v',
+                  '-t', 'all_weekly_excess_deaths',
+                  '-o', sqlfile, csvfile],
+                 stdout=PIPE, stderr=PIPE)
     out, err = proc.communicate()
-    debug(f'out=[{len(out)}]<<<{out}>>>')
-    debug(f'err=[{len(err)}]<<<{err}>>>')
+    debug(f'out=[{len(out)}]<<<{repr(out)}>>>')
+    debug(f'err=[{len(err)}]<<<{repr(err)}>>>')
     assert proc.returncode == 0
     assert os.path.exists(sqlfile)
 
@@ -627,8 +633,8 @@ def test_run_dash_import_csv(capsys, name: str, gport: int):
     cmd = 'psql -U postgres -d postgres -f /mnt/test_run_dash_import_csv.sql'
     container.exec_run(cmd, stdout=True, stderr=False, tty=True)
     out, err = capsys.readouterr()
-    debug(f'out=[{len(out)}]<<<{out}>>>')
-    debug(f'err=[{len(err)}]<<<{err}>>>')
+    debug(f'out=[{len(out)}]<<<{repr(out)}>>>')
+    debug(f'err=[{len(err)}]<<<{repr(err)}>>>')
 
     # At this point the database container is ready to roll
     # so it is time to create the dashboard.
@@ -643,8 +649,8 @@ def test_run_dash_import_csv(capsys, name: str, gport: int):
                   '-v'],
                  stdout=PIPE, stderr=PIPE)
     out, err = proc.communicate()
-    debug(f'out=[{len(out)}]<<<{out}>>>')
-    debug(f'err=[{len(err)}]<<<{err}>>>')
+    debug(f'out=[{len(out)}]<<<{repr(out)}>>>')
+    debug(f'err=[{len(err)}]<<<{repr(err)}>>>')
     assert proc.returncode == 0
 
     # And voila! It is done!
