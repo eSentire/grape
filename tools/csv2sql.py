@@ -1,30 +1,19 @@
 #!/usr/bin/env python
 '''
-This is a naive standalone tool to read a CSV data file with a header
+This is a standalone tool to read a CSV data file with a header
 row and convert it to SQL instructions to create and populate a table
 generically.
 
 It is generic because it figures out the field types by analyzing the
 data.
 
-It isn't perfect. There is one non-generic hack, if it sees a 'NA' in
-a column that is otherwise a number, it will set the value to zero.
+There are a number of options for specifying the output, how to
+convert certain values and what SQL types to use for integers,
+floats, dates and strings.
 
-Here is how it is run:
-   ./csv2sql.py CSV_FILE [TABLE_NAME]
+It is useful for adding CSV data to your dashboards.
 
-Where CSV_FILE is the name of the CSV file and TABLE_NAME is the
-name of the SQL table. If the TABLE_NAME is not specified, the
-file name root is used.
-
-The SQL is output to stdout unless the -o option is specified.
-
-Here is an example run:
-   $ ./csv2sql.py raw.csv raw_table > raw.sql
-
-Here is how to check the integrity of the code:
-   $ pylint ./etl.py
-   $ mypy ./etl.py
+See the help (-h) for more detailed information.
 '''
 import argparse
 import csv as csvmod
