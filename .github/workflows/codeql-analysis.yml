@@ -46,7 +46,8 @@ jobs:
         python -m pip install --upgrade pip pipenv
         if [ -f Pipfile ]; then 
           pipenv lock
-          pipenv install --system --deploy
+          pipenv install --system --deploy -v
+          echo Done
         fi
         # Set the `CODEQL-PYTHON` environment variable to the Python executable
         # that includes the dependencies
