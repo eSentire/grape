@@ -14,7 +14,10 @@ test would slow things down too much.
 '''
 import inspect
 import os
+import pathlib
 import sys
+import time
+from subprocess import Popen, PIPE
 from typing import Any, Tuple
 from zipfile import ZipFile
 import pytest
@@ -494,7 +497,58 @@ def test_run_tree(capsys: Any, name: str, gport: int):
     assert ':id=1:type=postgres' in out  # make sure that the database is there
     os.unlink(rfile)  # delete the report log
 
+
 @pytest.mark.depends(on=['test_run_tree'])
+@pytest.mark.parametrize(
+    'name',
+    [
+        (NAME),
+    ],
+)
+def test_run_runpga(name: str):
+    '''Test the runpga script.
+
+    Since this is not python, we check for the existence of the
+    created container.
+
+    Args:
+        capsys: Pytest fixture for capturing stdout/stderr.
+        name: The grape project name for this test.
+        gport: The grafana port for this test.
+    '''
+    _namegr, namepg, _namezp = make_names(name)
+
+    # Prerequisites.
+    assert os.path.exists(namepg)
+
+    # Run the subprocess to create the pgAdmin container.
+    path = os.path.join(pathlib.Path(__file__).parent.parent.absolute(), 'tools', 'runpga.sh')
+    debug(f'path={path}')
+    assert os.path.exists(path)
+    debug(f'container={namepg}')
+    proc = Popen([path, namepg], stdout=PIPE, stderr=PIPE)
+    out, err = proc.communicate()
+    debug(f'out=[{len(out)}]<<<{out}>>>')
+    debug(f'err=[{len(err)}]<<<{err}>>>')
+    assert proc.returncode == 0
+
+    # Make sure that the container was created.
+    # The 2 second wait is sufficient for the container to show
+    # up in the docker process table.
+    time.sleep(2)
+    namepa = name + 'pa'  # the pgadmin container
+    client = docker.from_env()
+    containers = client.containers.list(filters={'name': namepa})
+    assert containers
+    assert len(containers) == 1
+
+    # Now that the pgAdmincontainer exists, delete it.
+    # We gave proven that the script created it.
+    container = containers[0]
+    container.stop()  # queue the container stop process
+
+
+@pytest.mark.depends(on=['test_run_runpga'])
 @pytest.mark.parametrize(
     'name,gport',
     [
