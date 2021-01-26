@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2059
+# shellcheck disable=SC2059,SC2207
 #
 # This can be customized from the command line by setting the variable
 # values like this if jq is installed.
@@ -47,6 +47,9 @@ DESCRIPTION
 OPTIONS
     -d NAME     The Grafana data source name.
 
+       		This option can be specified multiple times
+		along with -n and -d for multiple data sources.
+
     -f INT      The Grafana dashboard parent folder id.
                 If not specified, the top level is assumed.
 
@@ -57,13 +60,21 @@ OPTIONS
     -h          This help message.
 
     -i NAME     The plugin id.
-                The default is 'postgres'
+
+       		This option can be specified multiple times
+		along with -n and -d for multiple data sources.
+
+                The default is 'postgres'.
 
     -j FILE     The dashboard JSON file to upload.
 
+    -k          Keep the temporary wrapper JSON.
+    		This is mainly used for debugging.
+
     -n NAME     The name of the Grafana datasource variable.
-                If not specified, the name will be extracted
-                from the JSON file if the jq program is present.
+
+       		This option can be specified multiple times
+		along with -n and -d for multiple data sources.
 
     -N          Do not use simple authentication.
                 The user is expected to use the -x option to add extra
@@ -87,19 +98,57 @@ EXAMPLES
     \$ $0 -h
 
     # Example 2.
-    #    Upload to a grape Grafana server.
+    #    Upload a dashboard to a grape Grafana server.
     #    The -u and -p options do not need to be specified.
     #    Pipe the curl output in jq to make it more readable.
     #    They are only shown for clarity.
     \$ grape server -v  # find the port
-    \$ $0 -u admin -p admin -g http://localhost:6400 -j x.json -d mypg -n DS_MYDB | jq
+    \$ $0 -u admin -p admin -g http://localhost:6400 -j x.json -n DS_MYDB -d mypg | jq
 
     # Example 3.
-    #    Upload to a grape Grafana server.
+    #    Upload a dashboard to a grape Grafana server.
     #    Pipe the curl output in jq to make it more readable.
     #    Use your own auth.
     \$ grape server -v  # find the port
-    \$ $0 -g http://localhost:6400 -j x.json -d mypg -N -x '-u admin:admin' -n DS_MYDB | jq
+    \$ $0 -g http://localhost:6400 -j x.json -n DS_MYDB -d mypg -N -x '-u admin:admin' | jq
+
+    # Example 4.
+    #    Upload a dashboard to a grape Grafana server with multiple
+    #    datasources.
+    #
+    #    Multiple data sources are specified by setting a 3-tuple
+    #    of options for each dataset that describes the variable (-n),
+    #    the new data source (-d) and the input plugin (-i).
+    #
+    #    Note that the same database can be used for multiple
+    #    variables.
+    #
+    #    Also note that if -i is not specified at all, it defaults
+    #    to postgres.
+    \$ grape server -v  # find the port
+    \$ $0 -g http://localhost:6400 -j x.json -N -x '-u admin:admin' \\
+          -n DS_MYDB  -d mypg  -i postgres \\
+          -n DS_MYDB2 -d mypg2 -i postgres \\
+          -n DS_MYDB3 -d mypg3 -i postgres \\
+          -n DS_MYDB4 -d mypg  -i postgres \\
+	  | jq
+
+
+    # Example 5.
+    #    Upload a dashboard to a grape Grafana server with multiple
+    #    datasources. Use the minimum number of entries for the tuple.
+    #
+    #    Note that for this to work properly, the datasets must be
+    #    specified in the same order that they appear in the JSON
+    #    "__inputs" record for the dashboard because it fills in
+    #    the values for the -n and -i.
+    \$ grape server -v  # find the port
+    \$ $0 -g http://localhost:6400 -j x.json -N -x '-u admin:admin' \\
+          -d mypg   \\
+          -d mypg2  \\
+          -d mypg3  \\
+          -d mypg   \\
+	  | jq
 
 EOF
     exit 0
@@ -115,25 +164,26 @@ ERRFMT='\x1b[31mERROR:%d: %s\x1b[0m\n'
 # ================================================================
 set -e
 DASH_AUTH=1
-DASH_DS=
+DASH_DS=()
 DASH_EXTRA_CURL=()
 DASH_FOLDER=0
 DASH_JSON=
-DASH_NAME=
-DASH_PLUGIN='postgres'
+DASH_NAME=()
+DASH_PLUGIN=()
 DASH_PASSWORD='admin'
 DASH_USERNAME='admin'
 DASH_URL=
+KEEP=0
 VERBOSE=0
 WRAP_JSON=/tmp/wrap-$$.json
 
-while getopts ':f:hd:g:i:j:n:Np:Pu:vx:' options ; do
+while getopts ':f:hd:g:i:j:kn:Np:Pu:vx:' options ; do
     case ${options} in
         h )
             _help
             ;;
         d )
-            DASH_DS=${OPTARG}
+            DASH_DS+=("${OPTARG}")
             ;;
         f )
             DASH_FOLDER=${OPTARG}
@@ -142,13 +192,16 @@ while getopts ':f:hd:g:i:j:n:Np:Pu:vx:' options ; do
             DASH_URL=${OPTARG}
             ;;
         i )
-            DASH_PLUGIN=${OPTARG}
+            DASH_PLUGIN+=("${OPTARG}")
             ;;
         j )
             DASH_JSON=${OPTARG}
             ;;
+        k )
+            KEEP=1
+            ;;
         n )
-            DASH_NAME=${OPTARG}
+            DASH_NAME+=("${OPTARG}")
             ;;
         N )
             DASH_AUTH=0
@@ -180,13 +233,7 @@ shift $((OPTIND -1))
 # ================================================================
 # Check required options.
 # ================================================================
-if [ -n "$DASH_JSON" ] && [ -z "$DASH_NAME" ] ; then
-    if jq --version &>/dev/null ; then
-        # If jq is available, extract the variable name.
-        DASH_NAME=$(jq '.__inputs[0].name' "$DASH_JSON" | awk -F'"' '{print $2}')
-    fi
-fi
-# need bash 4 or later
+# expect bash 4 or later
 BASH_MAJOR=$(echo "$BASH_VERSION" | awk -F. '{print $1}')
 if (( BASH_MAJOR < 4 )) ; then
     # Need 4 or later to support "declare -A".
@@ -194,19 +241,61 @@ if (( BASH_MAJOR < 4 )) ; then
     exit 1
 fi
 
-ERRCNT=0
-declare -A ROPTS=( ['-d']="$DASH_DS" ['-j']="$DASH_JSON" ['-g']="$DASH_URL" ['-n']="$DASH_NAME")
-for RKEY in "${!ROPTS[@]}" ; do
-    RVAL=${ROPTS[$RKEY]}
-    if [ -z "$RVAL" ] ; then
-        printf "$ERRFMT" \
-               $LINENO \
-               "missing required option: '$RKEY', see the help (-h) for more information" \
-               1>&2
-        ERRCNT=$(( ERRCNT += 1))
+NUM_DASH_DS=${#DASH_DS[@]}
+NUM_DASH_NAME=${#DASH_NAME[@]}
+NUM_DASH_PLUGIN=${#DASH_PLUGIN[@]}
+
+if [ -z "${DASH_JSON}" ] ; then
+    printf "$ERRFMT" $LINENO "JSON dashboard file not specified (-j)" 1>&2
+    exit 1
+fi
+
+if [ ! -f "${DASH_JSON}" ] ; then
+    printf "$ERRFMT" $LINENO "JSON dashboard file does not exist (-j): ${DASH_JSON}" 1>&2
+    exit 1
+fi
+
+if (( NUM_DASH_DS == 0 )) ; then
+    printf "$ERRFMT" $LINENO "the -d option must be specified at least once" 1>&2
+    exit 1
+fi
+
+if (( NUM_DASH_NAME == 0 )) ; then
+    # If -n is not specified and jq is present, get all of the names.
+    if jq --version &>/dev/null ; then
+	DASH_NAME=( $(jq -c '.__inputs[].name' "$DASH_JSON" | awk -F'"' '{print $2}') )
+	NUM_DASH_NAME=${#DASH_NAME[@]}
     fi
-done
-if (( ERRCNT )) ; then exit 1 ; fi
+fi
+
+if (( NUM_DASH_PLUGIN == 0 )) ; then
+    # If -i is not specified and jq is present, get all of the plugins.
+    if jq --version &>/dev/null ; then
+	DASH_PLUGIN=( $(jq -c '.__inputs[].pluginId' "$DASH_JSON" | awk -F'"' '{print $2}') )
+	NUM_DASH_PLUGIN=${#DASH_PLUGIN[@]}
+    fi
+fi
+
+if (( NUM_DASH_DS != NUM_DASH_NAME )) ; then
+    printf "$ERRFMT" $LINENO "the number -n and -d entries must be exactly the same" 1>&2
+    if jq --version &>/dev/null ; then
+	jq -c '.__inputs[]| {"-n": .name, "-d": .label, "-i": .pluginId}' "${DASH_JSON}"
+    fi
+    exit 1
+fi
+
+if (( NUM_DASH_DS != NUM_DASH_PLUGIN )) ; then
+    printf "$ERRFMT" $LINENO "the number -n and -i entries must be exactly the same" 1>&2
+    if jq --version &>/dev/null ; then
+	jq -c '.__inputs[]| {"-n": .name, "-d": .label, "-i": .pluginId}' "${DASH_JSON}"
+    fi
+    exit 1
+fi
+
+if [ -z "$DASH_URL" ] ; then
+    printf "$ERRFMT" $LINENO "grafana server URL not specified (-g)" 1>&2
+    exit 1
+fi
 
 # ================================================================
 # Report the setup.
@@ -216,13 +305,15 @@ if (( VERBOSE )) ; then
 Setup
     BASH_VERSION    : $BASH_VERSION
     DASH_AUTH       : $DASH_AUTH
-    DASH_DS         : $DASH_DS
+    DASH_DS         : $NUM_DASH_DS ${DASH_DS[@]}
     DASH_FOLDER     : $DASH_FOLDER
     DASH_JSON       : $DASH_JSON
-    DASH_NAME       : $DASH_NAME
+    DASH_NAME       : $NUM_DASH_JSON ${DASH_NAME[@]}
+    DASH_PLUGIN     : $NUM_DASH_PLUGIN ${DASH_PLUGIN[@]}
     DASH_URL        : $DASH_URL
     DASH_USERNAME   : $DASH_USERNAME
     DASH_EXTRA_CURL : ${DASH_EXTRA_CURL[@]}
+    KEEP            : $KEEP
     VERBOSE         : $VERBOSE
     WRAP_JSON       : $WRAP_JSON
 EOF
@@ -259,19 +350,40 @@ fi
 # overrides all subsequent low level definitions which is why it must
 # appear first.
 # ================================================================
-cat >"${WRAP_JSON}" <<EOF
-{
-  "inputs": [{
-    "name": "${DASH_NAME}",
-    "type": "datasource",
-    "pluginId": "${DASH_PLUGIN}",
-    "value": "${DASH_DS}"
-  }],
+printf '{\n  "inputs": [' > "${WRAP_JSON}"
+for((i=0; i<NUM_DASH_DS; i++)) ; do
+    if (( i )) ; then
+	printf '    ,\n' >>"${WRAP_JSON}"
+    fi
+    cat >>"${WRAP_JSON}" <<EOF
+    {
+      "name": "${DASH_NAME[$i]}",
+      "type": "datasource",
+      "pluginId": "${DASH_PLUGIN[$i]}",
+      "value": "${DASH_DS[$i]}"
+    }
+EOF
+done
+cat >>"${WRAP_JSON}" <<EOF
+  ],
   "dashboard": $(cat "${DASH_JSON}"),
   "folderId": ${DASH_FOLDER},
   "overwrite": true
 }
 EOF
+#cat >"${WRAP_JSON}" <<EOF
+#{
+#  "inputs": [{
+#    "name": "${DASH_NAME}",
+#    "type": "datasource",
+#    "pluginId": "${DASH_PLUGIN}",
+#    "value": "${DASH_DS}"
+#  }],
+#  "dashboard": $(cat "${DASH_JSON}"),
+#  "folderId": ${DASH_FOLDER},
+#  "overwrite": true
+#}
+#EOF
 
 # ================================================================
 # Upload to the Grafana server.
@@ -292,4 +404,10 @@ curl "${AUTH[@]}" "${DASH_EXTRA_CURL[@]}" \
      -d @"${WRAP_JSON}" \
      "${DASH_URL}"/api/dashboards/import
 if (( VERBOSE )) ; then { set +x; } 2>/dev/null ; fi
-rm -f "${WRAP_JSON}"
+
+# ================================================================
+# Clean up.
+# ================================================================
+if (( KEEP )) ; then
+    rm -f "${WRAP_JSON}"
+fi
