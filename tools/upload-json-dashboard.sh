@@ -125,6 +125,7 @@ DASH_PASSWORD='admin'
 DASH_USERNAME='admin'
 DASH_URL=
 VERBOSE=0
+WRAP_JSON=/tmp/wrap-$$.json
 
 while getopts ':f:hd:g:i:j:n:Np:Pu:vx:' options ; do
     case ${options} in
@@ -223,6 +224,7 @@ Setup
     DASH_USERNAME   : $DASH_USERNAME
     DASH_EXTRA_CURL : ${DASH_EXTRA_CURL[@]}
     VERBOSE         : $VERBOSE
+    WRAP_JSON       : $WRAP_JSON
 EOF
 fi
 
@@ -257,7 +259,7 @@ fi
 # overrides all subsequent low level definitions which is why it must
 # appear first.
 # ================================================================
-cat >x.json <<EOF
+cat >"${WRAP_JSON}" <<EOF
 {
   "inputs": [{
     "name": "${DASH_NAME}",
@@ -281,11 +283,13 @@ else
 fi
 if (( VERBOSE )) ; then set -x ; fi
 curl "${AUTH[@]}" "${DASH_EXTRA_CURL[@]}" \
+     --fail \
      -s \
      -k \
      -X POST \
      -H "Accept: application/json" \
      -H "Content-Type: application/json" \
-     -d @x.json \
+     -d @"${WRAP_JSON}" \
      "${DASH_URL}"/api/dashboards/import
 if (( VERBOSE )) ; then { set +x; } 2>/dev/null ; fi
+rm -f "${WRAP_JSON}"
