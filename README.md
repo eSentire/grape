@@ -329,9 +329,9 @@ jbhgr:4640
 
 ### Tools
 This section describes the tools in the local `tools` directory. They
-are not integrated into `grape` at this time because they are don't
+are not integrated into `grape` at this time because they don't
 fit the grape idiom but that is a completely subjective decision
-and may be revisitied in the future.
+which can be revisitied at any time.
 
 
 #### csv2sql.py
