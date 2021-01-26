@@ -1,14 +1,10 @@
 # demo02
-This directory contains another demo that is fully contained but this
-one is a bit more realistic than `demo01` because it shows how to
-populate the database and construct a dashboard from real data.
+This demo is a bit more realistic than `demo01` because it shows how
+to populate the database and construct a dashboard from CSV data.
 
 It does this by creating a grape system on host port 4410 that reads
 data from the associated database managed by the `demo02pg` container
 and displays it in the grafana server container: `demo2gr`.
-
-The goal is to help you create your own grape systems using real
-data.
 
 The demo is run by executing the `run.sh` script. That script first
 creates the grafana and postgres servers: `demo02gr` and `demo02pg`
