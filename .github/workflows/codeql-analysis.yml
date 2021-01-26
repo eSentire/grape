@@ -45,7 +45,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip pipenv
         if [ -f Pipfile ];
-        then pipenv install;
+        then pipenv install --system;
         fi
         # Set the `CODEQL-PYTHON` environment variable to the Python executable
         # that includes the dependencies
@@ -56,6 +56,7 @@ jobs:
       uses: github/codeql-action/init@v1
       with:
         languages: ${{ matrix.language }}
+        setup-python-dependencies: false
         # If you wish to specify custom queries, you can do so here or in a config file.
         # By default, queries listed here will override any specified in a config file.
         # Prefix the list here with "+" to use these queries and those in the config file.
