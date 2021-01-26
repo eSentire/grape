@@ -3,7 +3,7 @@ SHELL = bash
 PKG ?= grape
 WHEEL_DEPS := README.md setup.py $(shell find grape -type f | fgrep -v cache)
 .DEFAULT_GOAL := default
-SRCS = $(PKG) test
+SRCS = $(PKG) test tools
 
 # Store the virtual environment in the project space.
 export PIPENV_VENV_IN_PROJECT=1
@@ -53,6 +53,13 @@ test: init  ## Run the unit tests.
 pylint: init  ## Lint the source code.
 	$(call hdr,"$@")
 	pipenv run pylint --disable=duplicate-code $(SRCS)
+
+# shellcheck
+.PHONY: shellcheck
+shellcheck:  ## Lint the bash scripts. Only works if shellcheck is installed.
+	$(call hdr,"$@")
+	shellcheck tools/runpga.sh
+	shellcheck tools/upload-json-dashboard.sh
 
 # mypy
 .PHONY: mypy
