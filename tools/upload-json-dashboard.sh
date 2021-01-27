@@ -47,8 +47,8 @@ DESCRIPTION
 OPTIONS
     -d NAME     The Grafana data source name.
 
-       		This option can be specified multiple times
-		along with -n and -d for multiple data sources.
+                This option can be specified multiple times
+                along with -n and -d for multiple data sources.
 
     -f INT      The Grafana dashboard parent folder id.
                 If not specified, the top level is assumed.
@@ -61,20 +61,20 @@ OPTIONS
 
     -i NAME     The plugin id.
 
-       		This option can be specified multiple times
-		along with -n and -d for multiple data sources.
+                This option can be specified multiple times
+                along with -n and -d for multiple data sources.
 
                 The default is 'postgres'.
 
     -j FILE     The dashboard JSON file to upload.
 
     -k          Keep the temporary wrapper JSON.
-    		This is mainly used for debugging.
+                This is mainly used for debugging.
 
     -n NAME     The name of the Grafana datasource variable.
 
-       		This option can be specified multiple times
-		along with -n and -d for multiple data sources.
+                This option can be specified multiple times
+                along with -n and -d for multiple data sources.
 
     -N          Do not use simple authentication.
                 The user is expected to use the -x option to add extra
@@ -131,7 +131,7 @@ EXAMPLES
           -n DS_MYDB2 -d mypg2 -i postgres \\
           -n DS_MYDB3 -d mypg3 -i postgres \\
           -n DS_MYDB4 -d mypg  -i postgres \\
-	  | jq
+          | jq
 
 
     # Example 5.
@@ -148,7 +148,7 @@ EXAMPLES
           -d mypg2  \\
           -d mypg3  \\
           -d mypg   \\
-	  | jq
+          | jq
 
 EOF
     exit 0
@@ -263,23 +263,23 @@ fi
 if (( NUM_DASH_NAME == 0 )) ; then
     # If -n is not specified and jq is present, get all of the names.
     if jq --version &>/dev/null ; then
-	DASH_NAME=( $(jq -c '.__inputs[].name' "$DASH_JSON" | awk -F'"' '{print $2}') )
-	NUM_DASH_NAME=${#DASH_NAME[@]}
+        DASH_NAME=( $(jq -c '.__inputs[].name' "$DASH_JSON" | awk -F'"' '{print $2}') )
+        NUM_DASH_NAME=${#DASH_NAME[@]}
     fi
 fi
 
 if (( NUM_DASH_PLUGIN == 0 )) ; then
     # If -i is not specified and jq is present, get all of the plugins.
     if jq --version &>/dev/null ; then
-	DASH_PLUGIN=( $(jq -c '.__inputs[].pluginId' "$DASH_JSON" | awk -F'"' '{print $2}') )
-	NUM_DASH_PLUGIN=${#DASH_PLUGIN[@]}
+        DASH_PLUGIN=( $(jq -c '.__inputs[].pluginId' "$DASH_JSON" | awk -F'"' '{print $2}') )
+        NUM_DASH_PLUGIN=${#DASH_PLUGIN[@]}
     fi
 fi
 
 if (( NUM_DASH_DS != NUM_DASH_NAME )) ; then
     printf "$ERRFMT" $LINENO "the number -n and -d entries must be exactly the same" 1>&2
     if jq --version &>/dev/null ; then
-	jq -c '.__inputs[]| {"-n": .name, "-d": .label, "-i": .pluginId}' "${DASH_JSON}"
+        jq -c '.__inputs[]| {"-n": .name, "-d": .label, "-i": .pluginId}' "${DASH_JSON}"
     fi
     exit 1
 fi
@@ -287,7 +287,7 @@ fi
 if (( NUM_DASH_DS != NUM_DASH_PLUGIN )) ; then
     printf "$ERRFMT" $LINENO "the number -n and -i entries must be exactly the same" 1>&2
     if jq --version &>/dev/null ; then
-	jq -c '.__inputs[]| {"-n": .name, "-d": .label, "-i": .pluginId}' "${DASH_JSON}"
+        jq -c '.__inputs[]| {"-n": .name, "-d": .label, "-i": .pluginId}' "${DASH_JSON}"
     fi
     exit 1
 fi
@@ -353,7 +353,7 @@ fi
 printf '{\n  "inputs": [' > "${WRAP_JSON}"
 for((i=0; i<NUM_DASH_DS; i++)) ; do
     if (( i )) ; then
-	printf '    ,\n' >>"${WRAP_JSON}"
+        printf '    ,\n' >>"${WRAP_JSON}"
     fi
     cat >>"${WRAP_JSON}" <<EOF
     {
