@@ -53,7 +53,7 @@ excess deaths as a baseline).
 
 Please note that this demo is _not_ about the metholodogy or the
 results, which is very likely flawed. Instead it is meant to help
-you understand how to do visualizations from third party source
+you understand how to do visualizations from third party sources
 that provide CSV data.
 
 Also note that this is not meant to be guide to using postgres or
