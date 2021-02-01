@@ -1,16 +1,27 @@
 # demo02
-This directory contains a sample that is fully contained that is a bit
-more realistic than demo01 because it shows graph data from a public
-datasurce.
+This demo is a bit more realistic than `demo01` because it shows how
+to populate the database and construct a dashboard from CSV data.
 
-It will create a demo02 grafana system on host port 4410 that reads
-data from the associated database managed by the `demo02pg` container.
+It does this by creating a grape system on host port 4410 that reads
+data from the associated database managed by the `demo02pg` container
+and displays it in the grafana server container: `demo2gr`.
 
-The purpose is to show how to create an environment from scratch and then
-modify it. In the sample the modification comes from the `grafana.json`
-file and the `etl.py` tool that converts the downloaded data to database
-tables and views.
+The demo is run by executing the `run.sh` script. That script first
+creates the grafana and postgres servers: `demo02gr` and `demo02pg`
+using grape.
 
+After that the table creation SQL is generated from
+`all_weekly_excess_deaths.csv` by converting it using the `csv2sql.py`
+tool from the `tools` directory. The generated SQL is stored in a
+place that the database server can see
+(`demo02pg/mnt/all_weekly_excess_deaths.csv`) afterwhich `psql` is run
+to create the data table.
+
+Finally, the dashboard is created by running
+`upload-json-dashboard.sh` using `dash.json`.
+
+
+### How to run it
 In an interactive environment you would mostly likely make all of the
 changes in grafana and the database directly.
 
@@ -19,12 +30,20 @@ To run the demo:
 $ ./run.sh
 ```
 
+> Note that this script uses `grape/tools/upload-json-dashboard.sh` to
+> load the dashboard into the server and it uses
+> `grape/tools/csv2sql.py` to process the raw CSV and convert it to
+> SQL table creation commands.
+
+
+### Result
 When the run has completed, you will be able navigate to
 http://localhost:4410 to see the newly created dashboard.
 
 It looks like this:
 !['demo02'](/img/demo02.png)
 
+### Discussion
 This demo analyzes an open-source dataset from the Economist that
 allows it to grab information about COVID-19 mortality along with
 information about excess deaths. It then uses that information to
@@ -33,8 +52,9 @@ characterized as non-covid when they were actually Covid (using the
 excess deaths as a baseline).
 
 Please note that this demo is _not_ about the metholodogy or the
-results, which may well be flawed. Instead it is meant as a to help
-you understand how to do visualizations.
+results, which is very likely flawed. Instead it is meant to help
+you understand how to do visualizations from third party sources
+that provide CSV data.
 
 Also note that this is not meant to be guide to using postgres or
 grafana in any detail. It will merely help you set it up so that you
@@ -44,7 +64,141 @@ This document only shows simple time series data in the graph but be
 aware that you can include moving averages and other trend analysis by
 creating appropriate SQL queries.
 
+
+### Raw Data
 The raw data in `all_weekly_excess_deaths.csv` was manually
 downloaded from
 [this](https://raw.githubusercontent.com/TheEconomist/covid-19-excess-deaths-tracker/master/output-data/excess-deaths/all_weekly_excess_deaths.csv)
 site.
+
+
+### csv2sql.py
+The `csv2sql.py` tool reads the `all_weekly_excess_deaths.csv` and
+processes the CSV to automatically figure out the column types before
+writing out the SQL which makes it very useful for arbitrary
+datasets.
+
+For more information about this tool specify the help (`-h`) option.
+
+It is important to note that this tool and the subsequent database
+load must be run _before_ the JSON dashboard is uploaded.
+
+This is the sequence of commands that are used to populate the database.
+
+```bash
+$ pipenv run python ../../tools/csv2sql.py -c NA=0 -v all_weekly_excess_deaths.csv -o demo02pg/mnt/all_weekly_excess_deaths.sql
+.
+.
+$ docker exec -it demo02pg psql -U postgres -d postgres -f /mnt/all_weekly_excess_deaths.sql
+.
+.
+```
+
+The first command creates the SQL file and the second one updates the database.
+
+Once the update is complete, the newly created table can be viewed like this.
+
+```bash
+$ docker exec -it demo02pg psql -U postgres -d postgres -c '\dS+ all_weekly_excess_deaths'
+.
+.
+```
+
+
+### upload-json-dashboard.sh
+The `upload-json-dashboard.sh` tool reads a JSON file that is created
+from a single dashboard in the grafana UI that has the `Export for
+sharing externally` checkbox checked. Setting that flag causes the
+datasources used by the dashboard to be defined as variables that can
+be overwritten. In this example there is a single datasource variable
+named `DS_DEMO02PG`.
+
+For more information about this tool specify the help (`-h`) option.
+
+It is important to note that this tool must be run _after_ the
+database is populated to avoid issues.
+
+The command to upload the dashboard looks like this.
+
+```bash
+$ ../../tools/upload-json-dashboard.sh -f 0 -j dash.json -d "demo02pg" -g "http://localhost:4410"
+.
+.
+```
+
+
+### SQL Table Schema
+This is the SQL table schema that was generated by `csv2sql.py`.
+
+```
+$ docker exec -it demo02pg psql -U postgres -d postgres -c '\dS+ all_weekly_excess_deaths'
+                                                                   Table "public.all_weekly_excess_deaths"
+          Column          |            Type             | Collation | Nullable |                       Default                        | Storage  | Stats target | Description
+--------------------------+-----------------------------+-----------+----------+------------------------------------------------------+----------+--------------+-------------
+ id                       | integer                     |           | not null | nextval('all_weekly_excess_deaths_id_seq'::regclass) | plain    |              |
+ country                  | text                        |           |          |                                                      | extended |              |
+ region                   | text                        |           |          |                                                      | extended |              |
+ region_code              | text                        |           |          |                                                      | extended |              |
+ start_date               | timestamp without time zone |           |          |                                                      | plain    |              |
+ end_date                 | timestamp without time zone |           |          |                                                      | plain    |              |
+ year                     | integer                     |           |          |                                                      | plain    |              |
+ week                     | integer                     |           |          |                                                      | plain    |              |
+ population               | integer                     |           |          |                                                      | plain    |              |
+ total_deaths             | integer                     |           |          |                                                      | plain    |              |
+ covid_deaths             | integer                     |           |          |                                                      | plain    |              |
+ expected_deaths          | numeric                     |           |          |                                                      | main     |              |
+ excess_deaths            | numeric                     |           |          |                                                      | main     |              |
+ non_covid_deaths         | integer                     |           |          |                                                      | plain    |              |
+ covid_deaths_per_100k    | numeric                     |           |          |                                                      | main     |              |
+ excess_deaths_per_100k   | numeric                     |           |          |                                                      | main     |              |
+ excess_deaths_pct_change | numeric                     |           |          |                                                      | main     |              |
+Indexes:
+    "all_weekly_excess_deaths_pkey" PRIMARY KEY, btree (id)
+Access method: heap
+```
+
+
+### SQL Query
+The basic SQL query used for the time series graph looks like this:
+
+```sql
+WITH bigtime AS
+  (SELECT
+    *,
+    to_date(year::text || ' ' || week::text, 'IYYYIW') AS time,
+    -- uncounted_deaths is the number of unexpected deaths minus the covid_deaths
+    -- which assumes that all covid death are unexpected
+    -- if total_deaths < expected_deaths then this is not accurate
+    total_deaths - expected_deaths as unexpected_deaths,
+    greatest(total_deaths - expected_deaths - covid_deaths, 0) as uncounted_deaths
+    FROM all_weekly_excess_deaths)
+SELECT
+  $__timeGroup(time, '1w'),
+--  total_deaths as "Total Deaths",
+--  expected_deaths as "Expected Deaths",
+  covid_deaths as "COVID Deaths Reported",
+  uncounted_deaths as "COVID Deaths Not Reported",
+  'weekly:' as metric
+FROM
+  bigtime
+WHERE
+  $__timeFilter(time)
+  AND country in ($country)
+  AND region in ($region)
+GROUP BY
+  time,
+  total_deaths,
+  expected_deaths,
+  unexpected_deaths,
+  uncounted_deaths,
+  non_covid_deaths,
+  covid_deaths
+ORDER BY
+  time,
+  total_deaths,
+  expected_deaths,
+  unexpected_deaths,
+  uncounted_deaths,
+  non_covid_deaths,
+  covid_deaths ASC
+```

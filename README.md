@@ -19,6 +19,10 @@ Grafana Prototyping Environment
 1. [Export](#export)
 1. [Status](#status)
 1. [Tree](#tree)
+1. [Tools](#tools)
+   1. [csv2sql.py](#csv2sqlpy)
+   1. [runpga.sh](#runpgash)
+   1. [upload-json-dashboard.sh](#upload-json-dashboardsh)
 1. [Samples](#samples)
    1. [demo01](#demo01)
    1. [demo02](#demo02)
@@ -28,8 +32,6 @@ Grafana Prototyping Environment
    1. [Grafana](#grafana)
    1. [Postres](#postgres)
    1. [pgAdmin](#pgadmin)
-   1. [runpga.sh](#runpgash)
-   1. [upload-json-dashboard.sh](#upload-json-dashboardsh)
 1. [Acknowledgments](#acknowledgments)
 
 </details>
@@ -321,7 +323,68 @@ jbhgr:4640
       └─ Northstar:2
           └─ dashboards
               ├─ Jenkins Build Health Details:id=4:uid=ir0QjX-Mz:panels=9
-              └─ Jenkins Build Health:id=3:uid=6Q0QCuaGk:panels=70```
+              └─ Jenkins Build Health:id=3:uid=6Q0QCuaGk:panels=70
+```
+
+
+### Tools
+This section describes the tools in the local `tools` directory. They
+are not integrated into `grape` at this time because they don't
+fit the grape idiom but that is a completely subjective decision
+which can be revisitied at any time.
+
+
+#### csv2sql.py
+This is a standalone tool to read a CSV data file with a header
+row and convert it to SQL instructions to create and populate a table
+generically.
+
+It is generic because it figures out the field types by analyzing the
+data.
+
+There are a number of options for specifying the output, how to
+convert certain values and what SQL types to use for integers,
+floats, dates and strings.
+
+It is useful for adding CSV data to your dashboards.
+
+See the help (`-h`) for more detailed information.
+
+
+#### runpga.sh
+There is script called `tools/runpga.sh` that will create a pgAdmin
+container for you.
+
+For `demo01` you would run it like this:
+
+```bash
+$ tools/runpga.sh demo01pg
+```
+
+When it completes it prints out the information necessary to
+login into the pgAdmin and connect to the database.
+
+
+#### upload-json-dashboard.sh
+There is a script called `tools/upload-json-dashboard.sh` that will upload
+a JSON dashboard to a Grafana server from the command line.
+
+The upload is limited to servers with simple authentication based on a
+username and password unless you override it using `-x` and `-n`.
+
+The local dashboard JSON file is creatined by exporting the dashboard
+from the Grafana UI with the "Export for sharing externally" checkbox
+checked.
+
+This script is useful for transferring a single dashboard from one
+server to another.
+
+Although the same function can be accomplished in the UI, this script
+allows updates to be automated from the command line.
+
+This script requires that "curl" is installed.
+
+See the script help (`-h`) for more information and examples.
 
 
 ### Samples
@@ -439,42 +502,6 @@ $ docker inspect pgadmin4 | jq '.[]|.NetworkSettings.Networks.bridge.Gateway'
 For the above example, the database host would be `172.17.0.1:4401`
 or demo01 or `172.17.0.1L4411` for demo02 when referenced from the
 `pgAdmin` docker container created above: `http://localhost:4450`.
-
-
-#### runpga.sh
-There is script called `tools/runpga.sh` that will create a pgAdmin
-container for you.
-
-For `demo01` you would run it like this:
-
-```bash
-$ tools/runpga.sh demo01pg
-```
-
-When it completes it prints out the information necessary to
-login into the pgAdmin and connect to the database.
-
-
-#### upload-json-dashboard.sh
-There is a script called `tools/upload-json-dashboard.sh` that will upload
-a JSON dashboard to a Grafana server from the command line.
-
-The upload is limited to servers with simple authentication based on a
-username and password unless you override it using `-x` and `-n`.
-
-The local dashboard JSON file is creatined by exporting the dashboard
-from the Grafana UI with the "Export for sharing externally" checkbox
-checked.
-
-This script is useful for transferring a single dashboard from one
-server to another.
-
-Although the same function can be accomplished in the UI, this script
-allows updates to be automated from the command line.
-
-This script requires that "curl" is installed.
-
-See the script help (`-h`) for more information and examples.
 
 
 ### Acknowledgments

@@ -14,7 +14,10 @@ test would slow things down too much.
 '''
 import inspect
 import os
+import pathlib
 import sys
+import time
+from subprocess import Popen, PIPE
 from typing import Any, Tuple
 from zipfile import ZipFile
 import pytest
@@ -494,7 +497,166 @@ def test_run_tree(capsys: Any, name: str, gport: int):
     assert ':id=1:type=postgres' in out  # make sure that the database is there
     os.unlink(rfile)  # delete the report log
 
+
 @pytest.mark.depends(on=['test_run_tree'])
+@pytest.mark.parametrize(
+    'name',
+    [
+        (NAME),
+    ],
+)
+def test_run_runpga(name: str):
+    '''Test the runpga script.
+
+    Since this is not python, we check for the existence of the
+    created container.
+
+    Args:
+        capsys: Pytest fixture for capturing stdout/stderr.
+        name: The grape project name for this test.
+        gport: The grafana port for this test.
+    '''
+    _namegr, namepg, _namezp = make_names(name)
+
+    # Prerequisites.
+    assert os.path.exists(namepg)
+
+    # Run the subprocess to create the pgAdmin container.
+    path = os.path.join(pathlib.Path(__file__).parent.parent.absolute(), 'tools', 'runpga.sh')
+    debug(f'path={path}')
+    assert os.path.exists(path)
+    debug(f'container={namepg}')
+    proc = Popen([path, namepg], stdout=PIPE, stderr=PIPE)
+    out, err = proc.communicate()
+    debug(f'out=[{len(out)}]<<<{repr(out)}>>>')
+    debug(f'err=[{len(err)}]<<<{repr(err)}>>>')
+    assert proc.returncode == 0
+
+    # Make sure that the container was created.
+    # The 2 second wait is sufficient for the container to show
+    # up in the docker process table.
+    time.sleep(2)
+    namepa = name + 'pa'  # the pgadmin container
+    client = docker.from_env()
+    containers = client.containers.list(filters={'name': namepa})
+    assert containers
+    assert len(containers) == 1
+
+    # Now that the pgAdmincontainer exists, delete it.
+    # We gave proven that the script created it.
+    # We need to make sure that the container is destroyed.
+    containers = client.containers.list(filters={'name': namepa})
+    container = containers[0]
+    container.remove(force=True)
+    time.sleep(5)  # it will take much less time than this
+
+    # Make sure that it is dead and gone.
+    containers = client.containers.list(filters={'name': namepa})
+    assert not containers
+
+
+@pytest.mark.depends(on=['test_run_runpga'])
+@pytest.mark.parametrize(
+    'name,gport',
+    [
+        (NAME, GPORT),
+    ],  # pylint: disable=too-many-locals
+)
+def test_run_dash_import_csv(capsys, name: str, gport: int):
+    '''Verify that the dashboard csv import idiom works.
+
+    This is very similar to what demo02 does.
+
+    The test converts a CSV dataset to SQL and loads it
+    into a database. After that it creates a dashboard
+    that uses that database.
+
+    It uses the tools/csv2sql.py and tools/upload-json-dashboard.sh
+    scripts.
+
+    Args:
+        name: The grape project name for this test.
+        gport: The grafana port for this test.
+    '''
+    _namegr, namepg, _namezp = make_names(name)
+    testdir = pathlib.Path(__file__).parent.absolute()
+    csvfile = os.path.join(testdir, 'test_run_dash_import_csv.csv')
+    dashfile = os.path.join(testdir, 'test_run_dash_import_csv.json')
+    script1 = os.path.join(pathlib.Path(__file__).parent.parent.absolute(),
+                           'tools', 'csv2sql.py')
+    script2 = os.path.join(pathlib.Path(__file__).parent.parent.absolute(),
+                           'tools', 'upload-json-dashboard.sh')
+
+    debug(f'namepg  : {namepg}')
+    debug(f'gport   : {gport}')
+    debug(f'testdir : {testdir}')
+    debug(f'csvfile : {csvfile}')
+    debug(f'dashfile: {dashfile}')
+    debug(f'script1 : {script1}')
+    debug(f'script2 : {script2}')
+
+    # Verify that the data files exist.
+    assert os.path.exists(namepg)
+    assert os.path.exists(csvfile)
+    assert os.path.exists(dashfile)
+
+    # Verify that the help option works for the scripts.
+    for path in [script1, script2]:
+        debug(f'path={path}')
+        assert os.path.exists(path)
+        proc = Popen([path, '-h'], stdout=PIPE, stderr=PIPE)
+        out, err = proc.communicate()
+        debug(f'out=[{len(out)}]<<<{repr(out)}>>>')
+        debug(f'err=[{len(err)}]<<<{repr(err)}>>>')
+        assert proc.returncode == 0
+
+    # Create the SQL file with the correct file.
+    sqlfile = os.path.join(testdir, namepg, 'mnt', 'test_run_dash_import_csv.sql')
+    debug(f'sqlfile={sqlfile}')
+    proc = Popen([script1,
+                  '-v',
+                  '-t', 'all_weekly_excess_deaths',
+                  '-o', sqlfile, csvfile],
+                 stdout=PIPE, stderr=PIPE)
+    out, err = proc.communicate()
+    debug(f'out=[{len(out)}]<<<{repr(out)}>>>')
+    debug(f'err=[{len(err)}]<<<{repr(err)}>>>')
+    assert proc.returncode == 0
+    assert os.path.exists(sqlfile)
+
+    # Import the data into the container using docker.
+    client = docker.from_env()
+    containers = client.containers.list(filters={'name': namepg})
+    assert containers
+    assert len(containers) == 1
+    container = containers[0]
+    cmd = 'psql -U postgres -d postgres -f /mnt/test_run_dash_import_csv.sql'
+    container.exec_run(cmd, stdout=True, stderr=False, tty=True)
+    out, err = capsys.readouterr()
+    debug(f'out=[{len(out)}]<<<{repr(out)}>>>')
+    debug(f'err=[{len(err)}]<<<{repr(err)}>>>')
+
+    # At this point the database container is ready to roll
+    # so it is time to create the dashboard.
+    # $ jq '.__inputs[].name' test/test_run_dash_import_csv.json
+    # "DS_DEMO02PG"
+    proc = Popen([script2,
+                  '-d', namepg,
+                  '-f', '0',
+                  '-g', f'http://localhost:{gport}',
+                  '-j', dashfile,
+                  '-n', 'DS_DEMO02PG',
+                  '-v'],
+                 stdout=PIPE, stderr=PIPE)
+    out, err = proc.communicate()
+    debug(f'out=[{len(out)}]<<<{repr(out)}>>>')
+    debug(f'err=[{len(err)}]<<<{repr(err)}>>>')
+    assert proc.returncode == 0
+
+    # And voila! It is done!
+
+
+@pytest.mark.depends(on=['test_run_dash_import_csv'])
 @pytest.mark.parametrize(
     'name,gport',
     [
