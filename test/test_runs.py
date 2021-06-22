@@ -526,11 +526,11 @@ def test_run_runpga(name: str):
     debug(f'path={path}')
     assert os.path.exists(path)
     debug(f'container={namepg}')
-    proc = Popen([path, namepg], stdout=PIPE, stderr=PIPE)
-    out, err = proc.communicate()
-    debug(f'out=[{len(out)}]<<<{repr(out)}>>>')
-    debug(f'err=[{len(err)}]<<<{repr(err)}>>>')
-    assert proc.returncode == 0
+    with Popen([path, namepg], stdout=PIPE, stderr=PIPE) as proc:
+        out, err = proc.communicate()
+        debug(f'out=[{len(out)}]<<<{repr(out)}>>>')
+        debug(f'err=[{len(err)}]<<<{repr(err)}>>>')
+        assert proc.returncode == 0
 
     # Make sure that the container was created.
     # The 2 second wait is sufficient for the container to show
@@ -604,24 +604,24 @@ def test_run_dash_import_csv(capsys, name: str, gport: int):
     for path in [script1, script2]:
         debug(f'path={path}')
         assert os.path.exists(path)
-        proc = Popen([path, '-h'], stdout=PIPE, stderr=PIPE)
-        out, err = proc.communicate()
-        debug(f'out=[{len(out)}]<<<{repr(out)}>>>')
-        debug(f'err=[{len(err)}]<<<{repr(err)}>>>')
-        assert proc.returncode == 0
+        with Popen([path, '-h'], stdout=PIPE, stderr=PIPE) as proc:
+            out, err = proc.communicate()
+            debug(f'out=[{len(out)}]<<<{repr(out)}>>>')
+            debug(f'err=[{len(err)}]<<<{repr(err)}>>>')
+            assert proc.returncode == 0
 
     # Create the SQL file with the correct file.
     sqlfile = os.path.join(testdir, namepg, 'mnt', 'test_run_dash_import_csv.sql')
     debug(f'sqlfile={sqlfile}')
-    proc = Popen([script1,
-                  '-v',
-                  '-t', 'all_weekly_excess_deaths',
-                  '-o', sqlfile, csvfile],
-                 stdout=PIPE, stderr=PIPE)
-    out, err = proc.communicate()
-    debug(f'out=[{len(out)}]<<<{repr(out)}>>>')
-    debug(f'err=[{len(err)}]<<<{repr(err)}>>>')
-    assert proc.returncode == 0
+    with Popen([script1,
+                '-v',
+                '-t', 'all_weekly_excess_deaths',
+                '-o', sqlfile, csvfile],
+                stdout=PIPE, stderr=PIPE) as proc:
+        out, err = proc.communicate()
+        debug(f'out=[{len(out)}]<<<{repr(out)}>>>')
+        debug(f'err=[{len(err)}]<<<{repr(err)}>>>')
+        assert proc.returncode == 0
     assert os.path.exists(sqlfile)
 
     # Import the data into the container using docker.
@@ -640,18 +640,18 @@ def test_run_dash_import_csv(capsys, name: str, gport: int):
     # so it is time to create the dashboard.
     # $ jq '.__inputs[].name' test/test_run_dash_import_csv.json
     # "DS_DEMO02PG"
-    proc = Popen([script2,
-                  '-d', namepg,
-                  '-f', '0',
-                  '-g', f'http://localhost:{gport}',
-                  '-j', dashfile,
-                  '-n', 'DS_DEMO02PG',
-                  '-v'],
-                 stdout=PIPE, stderr=PIPE)
-    out, err = proc.communicate()
-    debug(f'out=[{len(out)}]<<<{repr(out)}>>>')
-    debug(f'err=[{len(err)}]<<<{repr(err)}>>>')
-    assert proc.returncode == 0
+    with Popen([script2,
+                '-d', namepg,
+                '-f', '0',
+                '-g', f'http://localhost:{gport}',
+                '-j', dashfile,
+                '-n', 'DS_DEMO02PG',
+                '-v'],
+                stdout=PIPE, stderr=PIPE) as proc:
+        out, err = proc.communicate()
+        debug(f'out=[{len(out)}]<<<{repr(out)}>>>')
+        debug(f'err=[{len(err)}]<<<{repr(err)}>>>')
+        assert proc.returncode == 0
 
     # And voila! It is done!
 
