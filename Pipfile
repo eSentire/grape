@@ -13,6 +13,11 @@ pytest = "*"
 pytest-cov = "*"
 pytest-html = "*"
 pytest-depends = "*"
+types-PyYAML = "*"
+types-python-dateutil = "*"
+types-requests = "*"
+types-setuptools = "*"
+types-toml = "*"
 
 [packages]
 docker = "*"
