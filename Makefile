@@ -66,7 +66,7 @@ shellcheck:  ## Lint the bash scripts. Only works if shellcheck is installed.
 .PHONY: mypy
 mypy: init  ## Type check the source code.
 	$(call hdr,"$@")
-	pipenv run mypy $(SRCS)
+	pipenv run mypy --install-types $(SRCS)
 
 # demo01
 .PHONY: demo01
@@ -123,7 +123,7 @@ help:  ## This help message.
 .wheel-install: $(WHEEL_DEPS)
 	$(call hdr,"package")
 	pipenv run pylint --disable=duplicate-code $(SRCS)
-	pipenv run mypy $(SRCS)
+	pipenv run mypy --install-types $(SRCS)
 	$(MAKE) wheel-install
 	touch $@
 
