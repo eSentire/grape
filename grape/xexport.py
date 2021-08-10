@@ -106,13 +106,13 @@ def xexport(conf: dict, xconf: str):
                 # The password is not defined.
                 # If it is defined, it is not changed because the user
                 # changed it manually by editing the zip contents.
-                for key in pmap:
+                for key, prec in pmap.items():
                     if key not in rec:
                         continue
                     name = rec[key]
-                    if name not in pmap[key]:
+                    if name not in prec:
                         continue
-                    password = pmap[key][name]
+                    password = prec[name]
                     rec['password']  = password
 
     # Fix the conf to write to the external source.
