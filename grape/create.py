@@ -166,7 +166,7 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
         i = 0
         while True:
             try:
-                logs = str(cobj.logs(tail=20))
+                logs = cobj.logs(tail=20).decode('utf-8')
                 if val in logs.lower():
                     elapsed = time.time() - start
                     info(f'container initialized: "{name}" after {elapsed:0.1f} seconds')
@@ -183,6 +183,7 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
                 time.sleep(sleep)
             else:
                 # Worst case is that we simply wait the maximum time.
+                logs = cobj.logs().decode('utf-8')  # provide the full log
                 err(f'container failed to initialize: "{name}"\nData: {logs}')
 
 
