@@ -96,7 +96,7 @@ def create_start(kconf: dict):
     dname = os.path.dirname(fname)
     if not os.path.exists(dname):
         os.makedirs(dname)
-    with open(fname, 'w') as ofp:
+    with open(fname, 'w', encoding='utf-8') as ofp:
         ofp.write(f'''\
 #!/usr/bin/env bash
 # Start the {name} container.

@@ -76,7 +76,7 @@ databases:
 '''
 
     # Write the file.
-    with open(path, 'w') as ofp:
+    with open(path, 'w', encoding='utf-8') as ofp:
         ofp.write(content)
 
 
@@ -468,7 +468,7 @@ def test_run_tree(capsys: Any, name: str, gport: int):
     debug(f'out=[{len(out)}]<<<{out}>>>')
     debug(f'err=[{len(err)}]<<<{err}>>>')
 
-    with open(rfile) as ifp:
+    with open(rfile, 'r', encoding='utf-8') as ifp:
         out = ifp.read()
         debug(f'out=[{len(out)}]<<<{out}>>>')
     key = namegr + ':' + str(gport)
@@ -486,7 +486,7 @@ def test_run_tree(capsys: Any, name: str, gport: int):
     debug(f'out=[{len(out)}]<<<{out}>>>')
     debug(f'err=[{len(err)}]<<<{err}>>>')
 
-    with open(rfile) as ifp:
+    with open(rfile, 'r', encoding='utf-8') as ifp:
         out = ifp.read()
         debug(f'out=[{len(out)}]<<<{out}>>>')
     key = namegr + ':' + str(gport)

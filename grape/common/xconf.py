@@ -20,7 +20,7 @@ def get_xconf(ifn: str) -> dict:
     Returns
         xcond: The configuration that was read.
     '''
-    with open(ifn) as ifp:
+    with open(ifn, encoding='utf-8') as ifp:
         iconf = yaml.load(ifp, Loader=yaml.FullLoader)
         if 'url' not in iconf or not iconf['url']:
             url = input('url: ')

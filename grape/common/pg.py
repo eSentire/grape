@@ -34,7 +34,7 @@ def load(conf: dict, sql: str):
     sql = sql.replace('CREATE ROLE postgres;', '-- CREATE ROLE postgres;')
 
     # Now write the SQL.
-    with open(tfpx, 'w') as ofp:
+    with open(tfpx, 'w', encoding='utf-8') as ofp:
         ofp.write(sql)
     if not os.path.exists(tfpx):
         err(f'file does not exist: {tfpx}')

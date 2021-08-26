@@ -277,7 +277,7 @@ def load(path: str) -> list:
     '''
     infov(f'loading CSV data from "{path}"')
     csv = []
-    with open(path) as ifp:
+    with open(path, encoding='utf-8') as ifp:
         reader = csvmod.reader(ifp)
         for row in reader:
             assert isinstance(row, list)
@@ -589,7 +589,7 @@ def main():
     csv = load(path)
     if args.out:
         infov(f'writing to "{args.out}"')
-        with open(args.out, 'w') as ofp:
+        with open(args.out, 'w', encoding='utf-8') as ofp:
             sql(args, csv, ofp)
     else:
         sql(args, csv, sys.stdout)
