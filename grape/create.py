@@ -13,7 +13,7 @@ import time
 import docker  # type: ignore
 
 from grape.common.args import DEFAULT_NAME, CLI, add_common_args, args_get_text
-from grape.common.log import initv, info, warn, err
+from grape.common.log import initv, info, err
 from grape.common.conf import get_conf
 from grape.common.gr import load_datasources
 from grape import __version__
@@ -65,8 +65,9 @@ def create_start(kconf: dict):
         kconf: The configuration data for a key.
     '''
     # Create the start script.
+    base = kconf['base']
     name = kconf['name']
-    fname = os.path.join(os.getcwd(), f'{name}/start.sh')
+    fname = os.path.join(os.getcwd(), f'{base}/start-{name}.sh')
     if os.path.exists(fname):
         return
 
@@ -134,9 +135,12 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
 
     # The values below are heuristic based on empirical observation of
     # the logs. They may have to change based on versions of docker.
+    # Values entries must be in lowercase, they are used for pattern
+    # matching in the docker logs.
     recs = [
-        {'key': 'gr', 'value': 'created default admin'},
-        {'key': 'pg', 'value': 'database system is ready to accept connections'},
+        {'key': 'gr', 'values': ['created default admin',
+                                 'http server listen']},
+        {'key': 'pg', 'values': ['database system is ready to accept connections']},
     ]
 
     # Define the sleep interval.
@@ -147,7 +151,7 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
     # Wait the containers to initialize.
     for rec in recs:
         key = rec['key']
-        val = rec['value']
+        values = rec['values']
         name = conf[key]['name']
         info(f'checking container initialization status of "{name}" with max wait: {waitval}')
 
@@ -167,9 +171,14 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
         while True:
             try:
                 logs = cobj.logs(tail=20).decode('utf-8')
-                if val in logs.lower():
-                    elapsed = time.time() - start
-                    info(f'container initialized: "{name}" after {elapsed:0.1f} seconds')
+                done = False
+                for value in values:
+                    if value in logs.lower():
+                        elapsed = time.time() - start
+                        info(f'container initialized: "{name}" after {elapsed:0.1f} seconds')
+                        done = True  # initialization was successful, bases on log pattern match
+                        break
+                if done:
                     break
             except docker.errors.NotFound as exc:
                 err(f'container failed to initialize: "{name}" - {exc}')
@@ -194,7 +203,8 @@ def create_containers(conf: dict, wait: float):
         conf: The configuration data.
         wait: The container create wait time.
     '''
-    create_start(conf['pg'])  # only needed for the database
+    create_start(conf['pg'])  # postgresql
+    create_start(conf['gr'])  # grafana
     client = docker.from_env()
     num = 0
     for key in ['gr', 'pg']:
@@ -212,7 +222,7 @@ def create_containers(conf: dict, wait: float):
                 os.makedirs(key1)
                 os.chmod(key1, 0o775)
             except FileExistsError as exc:
-                warn(str(exc))
+                info(str(exc))  # this is perfectly fine
 
         ports = kconf['ports']
         info(f'creating container "{cname}": {ports}')

@@ -78,7 +78,7 @@ def delete(conf: dict):
         conf: The configuration data.
     '''
     delete_containers(conf)
-    path = conf['pg']['name']
+    path = conf['base']
     if os.path.exists(path):
         info(f'removing directory: {path}')
         try:

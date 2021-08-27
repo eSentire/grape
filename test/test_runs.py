@@ -219,11 +219,15 @@ def test_run_create(capsys: Any, name: str, gport: int):
     sys.argv = [fct, '-v', '-n', name, '-g', str(gport)]
     create.main()
     out, err = capsys.readouterr()
-    script = os.path.join(namepg, 'start.sh')
+    scriptpg = os.path.join(name, f'start-{namepg}.sh')  # start script for the database
+    scriptgr = os.path.join(name, f'start-{namegr}.sh')  # start script for grafana
     debug(f'out=[{len(out)}]<<<{out}>>>')
     debug(f'err=[{len(err)}]<<<{err}>>>')
-    assert os.path.exists(namepg)
-    assert os.path.exists(script)  # make sure that the script was created
+    assert os.path.exists(name)  # make sure that the persistence store exists.
+    assert os.path.exists(os.path.join(name, 'mnt', 'pgdata'))  # database store
+    assert os.path.exists(os.path.join(name, 'mnt', 'grdata'))  # grafana store
+    assert os.path.exists(scriptpg)  # make sure that the database restart script was created
+    assert os.path.exists(scriptgr)  # make sure that the grafana restart script was created
     assert namegr in err
     assert namepg in err
     client = docker.from_env()
@@ -250,14 +254,15 @@ def test_run_save(capsys: Any, name: str, gport: int):
         name: The grape project name for this test.
         gport: The grafana port for this test.
     '''
-    _namegr, namepg, namezp = make_names(name)
+    _namegr, _namepg, namezp = make_names(name)
     fct = inspect.stack()[0].function
     sys.argv = [fct, '-v', '-n', name, '-g', str(gport), '-f', namezp]
     save.main()
     out, err = capsys.readouterr()
     debug(f'out=[{len(out)}]<<<{out}>>>')
     debug(f'err=[{len(err)}]<<<{err}>>>')
-    assert os.path.exists(namepg)
+    assert os.path.exists(os.path.join(name, 'mnt', 'pgdata'))  # database store
+    assert os.path.exists(os.path.join(name, 'mnt', 'grdata'))  # grafana store
     assert os.path.exists(namezp)
     assert 'docker exec' in err
     assert '1 datasources' in err
@@ -288,7 +293,6 @@ def test_run_load(capsys: Any, name: str, gport: int):
     '''
     namegr, namepg, namezp = make_names(name)
     fct = inspect.stack()[0].function
-    assert os.path.exists(namepg)  # the database directory
     assert os.path.exists(namezp)  # the zip file
     sys.argv = [fct, '-v', '-n', name, '-g', str(gport), '-f', namezp]
     load.main()
@@ -318,7 +322,6 @@ def test_run_import(capsys: Any, name: str, gport: int):
     fct = inspect.stack()[0].function
 
     # Prerequisites.
-    assert os.path.exists(namepg)
     if os.path.exists(namezp):
         os.unlink(namezp)
 
@@ -354,12 +357,9 @@ def test_run_export(capsys: Any, name: str, name2: str, gport2: int):
         name2: The export grape project.
         gport2: The export grafana port.
     '''
-    _namegr, namepg, namezp = make_names(name)
+    _namegr, _namepg, namezp = make_names(name)
     namegr2, namepg2, _namezp2 = make_names(name2)
     fct = inspect.stack()[0].function
-
-    # Prerequisites.
-    assert os.path.exists(namepg)
 
     # Create the name2 container to export to.
     sys.argv = [fct, '-v', '-n', name2, '-g', str(gport2)]
@@ -367,7 +367,6 @@ def test_run_export(capsys: Any, name: str, name2: str, gport2: int):
     out, err = capsys.readouterr()
     debug(f'out=[{len(out)}]<<<{out}>>>')
     debug(f'err=[{len(err)}]<<<{err}>>>')
-    assert os.path.exists(namepg2)
     assert namegr2 in err
     assert namepg2 in err
     client = docker.from_env()
@@ -378,7 +377,7 @@ def test_run_export(capsys: Any, name: str, name2: str, gport2: int):
 
     # Prerequisites.
     assert os.path.exists(namezp)  # the import zip.
-    assert os.path.exists(namepg2)  # the export database
+    assert os.path.exists(os.path.join(name2, 'mnt', 'pgdata'))  # database store for name2
 
     # Create the YAML conf file for logging in.
     xcfn = fct + '.yaml'
@@ -411,13 +410,14 @@ def test_run_status(capsys: Any, name: str, name2: str):
         name: The grape project name for this test.
         name2: The export grape project.
     '''
-    _namegr, namepg, _namezp = make_names(name)
-    _namegr2, namepg2, _namezp2 = make_names(name2)
+    _namegr, _namepg, _namezp = make_names(name)
     fct = inspect.stack()[0].function
 
     # Prerequisites.
-    assert os.path.exists(namepg)
-    assert os.path.exists(namepg2)
+    assert os.path.exists(os.path.join(name, 'mnt', 'pgdata'))  # database store
+    assert os.path.exists(os.path.join(name, 'mnt', 'grdata'))  # grafana store
+    assert os.path.exists(os.path.join(name2, 'mnt', 'pgdata'))  # database store
+    assert os.path.exists(os.path.join(name2, 'mnt', 'grdata'))  # grafana store
 
     sys.argv = [fct, '-v']
     status.main()
@@ -449,7 +449,8 @@ def test_run_tree(capsys: Any, name: str, gport: int):
     fct = inspect.stack()[0].function
 
     # Prerequisites.
-    assert os.path.exists(namepg)
+    assert os.path.exists(os.path.join(name, 'mnt', 'pgdata'))  # database store
+    assert os.path.exists(os.path.join(name, 'mnt', 'grdata'))  # grafana store
 
     # Negative test.
     with pytest.raises(SystemExit) as exc:
@@ -517,9 +518,6 @@ def test_run_runpga(name: str):
         gport: The grafana port for this test.
     '''
     _namegr, namepg, _namezp = make_names(name)
-
-    # Prerequisites.
-    assert os.path.exists(namepg)
 
     # Run the subprocess to create the pgAdmin container.
     path = os.path.join(pathlib.Path(__file__).parent.parent.absolute(), 'tools', 'runpga.sh')
@@ -596,7 +594,9 @@ def test_run_dash_import_csv(capsys, name: str, gport: int):
     debug(f'script2 : {script2}')
 
     # Verify that the data files exist.
-    assert os.path.exists(namepg)
+    assert os.path.exists(name)  # make sure that the persistence store exists.
+    assert os.path.exists(os.path.join(name, 'mnt', 'pgdata'))  # database store
+    assert os.path.exists(os.path.join(name, 'mnt', 'grdata'))  # grafana store
     assert os.path.exists(csvfile)
     assert os.path.exists(dashfile)
 
@@ -611,7 +611,7 @@ def test_run_dash_import_csv(capsys, name: str, gport: int):
             assert proc.returncode == 0
 
     # Create the SQL file with the correct file.
-    sqlfile = os.path.join(testdir, namepg, 'mnt', 'test_run_dash_import_csv.sql')
+    sqlfile = os.path.join(testdir, name, 'mnt', 'test_run_dash_import_csv.sql')
     debug(f'sqlfile={sqlfile}')
     with Popen([script1,
                 '-v',
@@ -683,7 +683,7 @@ def test_run_cleanup(capsys: Any, name: str, gport: int):
     out, err = capsys.readouterr()
     debug(f'out=[{len(out)}]<<<{out}>>>')
     debug(f'err=[{len(err)}]<<<{err}>>>')
-    assert not os.path.exists(namepg)
+    assert not os.path.exists(name)
     assert namepg in err
     if os.path.exists(namezp):
         os.unlink(namezp)

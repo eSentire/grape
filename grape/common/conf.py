@@ -32,7 +32,9 @@ def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> Dict[str, An
     '''
     grname = bname + 'gr'
     pgname = bname + 'pg'
-    pgpath_share = os.path.join(os.getcwd(), pgname)
+    grpath_share = os.path.join(os.getcwd(), bname)
+    grpath_mnt = os.path.join(grpath_share, 'mnt')
+    pgpath_share = os.path.join(os.getcwd(), bname)
     pgpath_mnt = os.path.join(pgpath_share, 'mnt')
     conf : Dict[str, Any] = {
         'timestamp': datetime.datetime.utcnow().isoformat(timespec='seconds'),
@@ -40,6 +42,7 @@ def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> Dict[str, An
         'base': bname,
         'file': fname,
         'gr': {
+            'base': bname,
             'name': grname,
             'cname': '/' + grname,  # docker container path
             'xport': grxport,
@@ -47,8 +50,6 @@ def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> Dict[str, An
             'image': 'grafana/grafana:latest',
             'remove': True,
             'detach': True,
-            'env': [],
-            'vols': {},
             'labels': {'grape.type': 'gr',
                        'grape.version' : __version__},
             'username': DEFAULT_USERNAME,
@@ -69,8 +70,20 @@ def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> Dict[str, An
                 },
                 'readOnly': False,
             },
+            'share': grpath_share,
+            'mnt': grpath_mnt,
+            'vols': {
+                grpath_mnt: {
+                    'bind': '/mnt',
+                    'mode': 'rw',
+                },
+            },
+            'env': [
+                'GF_PATHS_DATA=/mnt/grdata',
+            ],
         },
         'pg': {
+            'base': bname,
             'name': pgname,
             'cname': '/' + pgname,  # docker container path
             'xport': pgxport,
