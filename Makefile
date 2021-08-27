@@ -142,4 +142,4 @@ wheel-build: init  ## Build the wheel.
 .PHONY: init
 init:  ## Initialize the environment.
 	$(call hdr,$@)
-	pipenv install --dev
+	pipenv install --dev --python=python3.9
