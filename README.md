@@ -158,10 +158,12 @@ This the persistent storage looks like from the containers.
 ```
 $ docker exec -it examplepg ls -l /mnt
 total 0
-drwx------ 26 506 dialout 832 Aug 27 16:28 pgdata
+drwxr-xr-x  5 506 dialout 160 Aug 27 17:04 grdata
+drwx------ 26 506 dialout 832 Aug 27 17:04 pgdata
 $ docker exec -it examplegr ls -l /mnt
 total 0
-drwxr-xr-x    5 506      dialout        160 Aug 27 16:28 grdata
+drwxr-xr-x    5 506      dialout        160 Aug 27 17:04 grdata
+drwx------   26 506      dialout        832 Aug 27 17:04 pgdata
 ```
 
 It also creates the database container start script in

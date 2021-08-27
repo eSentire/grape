@@ -75,24 +75,25 @@ def create_start(conf: dict, key: str):
 
     # Create the docker command.
     cmd = 'docker run'
-    if kconf['detach']:
+    kwargs = kconf['client.containers.run']
+    if kwargs['detach']:
         cmd += ' -d'
-    if kconf['remove']:
+    if kwargs['remove']:
         cmd += ' --rm'
     if name:
         cmd += f' --name {name} -h {name}'
-    if kconf['env']:
-        for env in kconf['env']:
+    if kwargs['environment']:
+        for env in kwargs['environment']:
             cmd += f' -e "{env}"'
-    if kconf['ports']:
-        for key1, val1 in kconf['ports'].items():
+    if kwargs['ports']:
+        for key1, val1 in kwargs['ports'].items():
             cport = key1
             hport = val1
             cmd += f' -p {hport}:{cport}'
-    if kconf['vols']:
-        for key1, val1 in kconf['vols'].items():
+    if kwargs['volumes']:
+        for key1, val1 in kwargs['volumes'].items():
             cmd += f' -v {key1}:' + val1['bind']
-    cmd += ' ' + kconf['image']
+    cmd += ' ' + kwargs['image']
 
     # Create the script.
     info(f'start script: {fname}')
@@ -223,7 +224,8 @@ def create_containers(conf: dict, wait: float):
 
         # Create the volume mounted subdirectories with the proper
         # permissions.
-        for key1 in kconf['vols']:
+        kwargs = kconf['client.containers.run']
+        for key1 in kwargs['volumes']:
             try:
                 os.makedirs(key1)
                 os.chmod(key1, 0o775)
@@ -233,18 +235,7 @@ def create_containers(conf: dict, wait: float):
         ports = kconf['ports']
         info(f'creating container "{cname}": {ports}')
         try:
-            cobj = client.containers.run(image=kconf['image'],
-                                         hostname=kconf['name'],
-                                         name=kconf['name'],
-                                         remove=kconf['remove'],
-                                         detach=kconf['detach'],
-                                         labels=kconf['labels'],
-                                         ports=ports,
-                                         stdout=True,
-                                         stderr=False,
-                                         user=kconf['user'],
-                                         environment=kconf['env'],
-                                         volumes=kconf['vols'])
+            cobj = client.containers.run(**kwargs)
         except docker.errors.DockerException as exc:
             logs = cobj.logs().decode('utf-8')
             err(f'container failed to run: "{cname}" - {exc}:\n{logs}\n')

@@ -42,16 +42,32 @@ def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> Dict[str, An
         'base': bname,
         'file': fname,
         'gr': {
+            'client.containers.run': {
+                'detach': True,
+                'environment': [
+                    'GF_PATHS_DATA=/mnt/grdata',
+                ],
+                'hostname': grname,
+                'image': 'grafana/grafana:latest',
+                'name': grname,
+                'remove': True,
+                'stdout': True,
+                'stderr': True,
+                'labels': {'grape.type': 'gr',
+                           'grape.version' : __version__},
+                'user': f'{os.getuid()}:{os.getgid()}',
+                'volumes': {
+                    grpath_mnt: {
+                        'bind': '/mnt',
+                        'mode': 'rw',
+                    },
+                },
+            },
             'base': bname,
             'name': grname,
             'cname': '/' + grname,  # docker container path
             'xport': grxport,
             'iport': 3000,  # default grafana port
-            'image': 'grafana/grafana:latest',
-            'remove': True,
-            'detach': True,
-            'labels': {'grape.type': 'gr',
-                       'grape.version' : __version__},
             'username': DEFAULT_USERNAME,
             'password': DEFAULT_PASSWORD,
             'host': 'localhost',
@@ -70,47 +86,40 @@ def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> Dict[str, An
                 },
                 'readOnly': False,
             },
-            'share': grpath_share,
-            'mnt': grpath_mnt,
-            'vols': {
-                grpath_mnt: {
-                    'bind': '/mnt',
-                    'mode': 'rw',
-                },
-            },
-            'env': [
-                'GF_PATHS_DATA=/mnt/grdata',
-            ],
-            'user': f'{os.getuid()}:{os.getgid()}',
         },
         'pg': {
+            'client.containers.run': {
+                'detach': True,
+                'environment': [
+                    'PGDATA=/mnt/pgdata',
+                    'POSTGRES_USER=postgres',
+                    'POSTGRES_PASSWORD=password'],
+                'hostname': pgname,
+                'image': 'postgres:latest',
+                'name': pgname,
+                'remove': True,
+                'stdout': True,
+                'stderr': True,
+                'labels': {'grape.type': 'pg',
+                           'grape.version' : __version__},
+                'user': f'{os.getuid()}:{os.getgid()}',
+                'volumes': {
+                    pgpath_mnt: {
+                        'bind': '/mnt',
+                        'mode': 'rw',
+                    },
+                },
+            },
             'base': bname,
             'name': pgname,
             'cname': '/' + pgname,  # docker container path
             'xport': pgxport,
             'iport': 5432,  # default postgres port
-            'image': 'postgres:latest',
-            'remove': True,
-            'detach': True,
-            'env': [
-                'PGDATA=/mnt/pgdata',
-                'POSTGRES_USER=postgres',
-                'POSTGRES_PASSWORD=password'],
-            'share': pgpath_share,
             'mnt': pgpath_mnt,
-            'vols': {
-                pgpath_mnt: {
-                    'bind': '/mnt',
-                    'mode': 'rw',
-                },
-            },
-            'labels': {'grape.type': 'pg',
-                       'grape.version' : __version__},
             'dbname': 'postgres',
             'username': 'postgres',
             'password': 'password',
             'host': 'localhost',
-            'user': f'{os.getuid()}:{os.getgid()}',
         },
     }
 
@@ -125,6 +134,14 @@ def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> Dict[str, An
         f'{conf["gr"]["iport"]}/tcp': conf['gr']['xport'],
     }
     conf['pg']['ports'] = {
+        f'{conf["pg"]["iport"]}/tcp': conf['pg']['xport'],
+    }
+
+    # Add in the port mappings for the containers.
+    conf['gr']['client.containers.run']['ports'] = {
+        f'{conf["gr"]["iport"]}/tcp': conf['gr']['xport'],
+    }
+    conf['pg']['client.containers.run']['ports'] = {
         f'{conf["pg"]["iport"]}/tcp': conf['pg']['xport'],
     }
 
