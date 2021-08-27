@@ -127,7 +127,9 @@ $ pipenv run grape create -v -g 4600 -n example
 ```
 
 This will create two docker containers: `examplegr` which is the
-grafana server and `examplepg` which is the postgresql server.
+grafana server and `examplepg` which is the postgresql server.and then
+connects them so that the postgresql container database becomes a datasource
+in the grafana container.
 
 If the docker containers were previously killed because of something
 like a system crash, `grape create` will restart them in the same
