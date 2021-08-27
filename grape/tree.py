@@ -430,7 +430,7 @@ def main():
     name = container.name + ':' + str(opts.grxport)
     root = collect(burl, DEFAULT_AUTH, name)
     if opts.fname:
-        with open(opts.fname, 'w') as ofp:
+        with open(opts.fname, 'w', encoding='utf-8') as ofp:
             print_tree(opts, ofp, root)
     else:
         print_tree(opts, sys.stdout, root)

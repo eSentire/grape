@@ -13,7 +13,7 @@ import time
 import docker  # type: ignore
 
 from grape.common.args import DEFAULT_NAME, CLI, add_common_args, args_get_text
-from grape.common.log import initv, info, warn, err
+from grape.common.log import initv, info, err
 from grape.common.conf import get_conf
 from grape.common.gr import load_datasources
 from grape import __version__
@@ -58,45 +58,49 @@ VERSION:
     return opts
 
 
-def create_start(kconf: dict):
+def create_start(conf: dict, key: str):
     '''Create the start script.
 
     Args:
-        kconf: The configuration data for a key.
+        kconf: The configuration data.
+        key: pg or gr.
     '''
     # Create the start script.
+    kconf = conf[key]
+    base = kconf['base']
     name = kconf['name']
-    fname = os.path.join(os.getcwd(), f'{name}/start.sh')
+    fname = os.path.join(os.getcwd(), base, key, 'start.sh')
     if os.path.exists(fname):
         return
 
     # Create the docker command.
     cmd = 'docker run'
-    if kconf['detach']:
+    kwargs = kconf['client.containers.run']
+    if kwargs['detach']:
         cmd += ' -d'
-    if kconf['remove']:
+    if kwargs['remove']:
         cmd += ' --rm'
     if name:
         cmd += f' --name {name} -h {name}'
-    if kconf['env']:
-        for env in kconf['env']:
+    if kwargs['environment']:
+        for env in kwargs['environment']:
             cmd += f' -e "{env}"'
-    if kconf['ports']:
-        for key1, val1 in kconf['ports'].items():
+    if kwargs['ports']:
+        for key1, val1 in kwargs['ports'].items():
             cport = key1
             hport = val1
             cmd += f' -p {hport}:{cport}'
-    if kconf['vols']:
-        for key1, val1 in kconf['vols'].items():
+    if kwargs['volumes']:
+        for key1, val1 in kwargs['volumes'].items():
             cmd += f' -v {key1}:' + val1['bind']
-    cmd += ' ' + kconf['image']
+    cmd += ' ' + kwargs['image']
 
     # Create the script.
     info(f'start script: {fname}')
     dname = os.path.dirname(fname)
     if not os.path.exists(dname):
         os.makedirs(dname)
-    with open(fname, 'w') as ofp:
+    with open(fname, 'w', encoding='utf-8') as ofp:
         ofp.write(f'''\
 #!/usr/bin/env bash
 # Start the {name} container.
@@ -134,9 +138,12 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
 
     # The values below are heuristic based on empirical observation of
     # the logs. They may have to change based on versions of docker.
+    # Values entries must be in lowercase, they are used for pattern
+    # matching in the docker logs.
     recs = [
-        {'key': 'gr', 'value': 'created default admin'},
-        {'key': 'pg', 'value': 'database system is ready to accept connections'},
+        {'key': 'gr', 'values': ['created default admin',
+                                 'http server listen']},
+        {'key': 'pg', 'values': ['database system is ready to accept connections']},
     ]
 
     # Define the sleep interval.
@@ -147,7 +154,7 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
     # Wait the containers to initialize.
     for rec in recs:
         key = rec['key']
-        val = rec['value']
+        values = rec['values']
         name = conf[key]['name']
         info(f'checking container initialization status of "{name}" with max wait: {waitval}')
 
@@ -157,8 +164,11 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
         # only cares about the total time.
         try:
             cobj = client.containers.get(name)
-        except docker.errors.NotFound as exc:
-            err(f'container failed to initialize: "{name}" - {exc}')
+        except docker.errors.DockerException as exc:
+            logs = cobj.logs().decode('utf-8')  # provide the full log
+            ##clist = [f'{c.name}:{c.short_id}:{c.status}'
+            # for c in client.containers.list(all=True)]
+            err(f'container failed to initialize: "{name}" - {exc}\n{logs}')
 
         # Read the container logs.
         start = time.time()
@@ -167,12 +177,18 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
         while True:
             try:
                 logs = cobj.logs(tail=20).decode('utf-8')
-                if val in logs.lower():
-                    elapsed = time.time() - start
-                    info(f'container initialized: "{name}" after {elapsed:0.1f} seconds')
+                done = False
+                for value in values:
+                    if value in logs.lower():
+                        elapsed = time.time() - start
+                        info(f'container initialized: "{name}" after {elapsed:0.1f} seconds')
+                        done = True  # initialization was successful, bases on log pattern match
+                        break
+                if done:
                     break
-            except docker.errors.NotFound as exc:
-                err(f'container failed to initialize: "{name}" - {exc}')
+            except docker.errors.DockerException as exc:
+                logs = cobj.logs().decode('utf-8')  # provide the full log
+                err(f'container failed to initialize: "{name}" - {exc}\n{logs}')
 
             elapsed = time.time() - start
             if elapsed <= waitval:
@@ -194,7 +210,8 @@ def create_containers(conf: dict, wait: float):
         conf: The configuration data.
         wait: The container create wait time.
     '''
-    create_start(conf['pg'])  # only needed for the database
+    create_start(conf, 'pg')  # postgresql
+    create_start(conf, 'gr')  # grafana
     client = docker.from_env()
     num = 0
     for key in ['gr', 'pg']:
@@ -207,24 +224,21 @@ def create_containers(conf: dict, wait: float):
 
         # Create the volume mounted subdirectories with the proper
         # permissions.
-        for key1 in kconf['vols']:
+        kwargs = kconf['client.containers.run']
+        for key1 in kwargs['volumes']:
             try:
                 os.makedirs(key1)
                 os.chmod(key1, 0o775)
             except FileExistsError as exc:
-                warn(str(exc))
+                info(str(exc))  # this is perfectly fine
 
         ports = kconf['ports']
         info(f'creating container "{cname}": {ports}')
-        client.containers.run(image=kconf['image'],
-                              hostname=kconf['name'],
-                              name=kconf['name'],
-                              remove=kconf['remove'],
-                              detach=kconf['detach'],
-                              labels=kconf['labels'],
-                              ports=ports,
-                              environment=kconf['env'],
-                              volumes=kconf['vols'])
+        try:
+            cobj = client.containers.run(**kwargs)
+        except docker.errors.DockerException as exc:
+            logs = cobj.logs().decode('utf-8')
+            err(f'container failed to run: "{cname}" - {exc}:\n{logs}\n')
         num += 1
 
     if wait:

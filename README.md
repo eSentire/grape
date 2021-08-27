@@ -126,16 +126,67 @@ To create the infrastructure:
 $ pipenv run grape create -v -g 4600 -n example
 ```
 
-This will create two docker containers: `examplegr` and
-`examplepg`. It will also map the local `examplepg` directory to the
-database container to save database results if the container is
-restarted for any reason and, finally, it will connect the database as
-a source in the grafana server.
+This will create two docker containers: `examplegr` which is the
+grafana server and `examplepg` which is the postgresql server.
 
-It also creates the database start script in `examplepg/start.sh` with
-the raw docker comand to start the database container with all
-existing data if it stops for any reason. Once started it may take up
-to 30 seconds to initialize.
+It will also create and map the local `example/pg/mnt/pgdata` directory
+to the database container to save database results and
+`example/gr/mnt/grdata` to the grafana container to save the grafana
+dashboard data. This is done so that if the container is restarted for
+any reason the postgresql database and grafana dashboards are not
+lost. And, finally, it will connect the database as a source in the
+grafana server.
+
+This is what the persistent storage looks like on the host:
+```
+$ tree -L 3 example
+example
+├── gr
+│   ├── mnt
+│   │   └── grdata
+│   └── start.sh
+└── pg
+    ├── mnt
+    │   └── pgdata
+    └── start.sh
+
+6 directories, 2 files
+```
+
+This the persistent storage looks like from the containers.
+
+```
+$ docker exec -it examplepg ls -l /mnt
+total 0
+drwxr-xr-x  5 506 dialout 160 Aug 27 17:04 grdata
+drwx------ 26 506 dialout 832 Aug 27 17:04 pgdata
+$ docker exec -it examplegr ls -l /mnt
+total 0
+drwxr-xr-x    5 506      dialout        160 Aug 27 17:04 grdata
+drwx------   26 506      dialout        832 Aug 27 17:04 pgdata
+```
+
+It also creates the database container start script in
+`example/gr/start.sh` and the grafana container start script in
+`example/pg/start.sh`.  These scripts contain the raw docker
+commands to start the database and grafana containers with all
+existing data if either container is killed. Once started the
+containers _may_ take up to 30 seconds to initialize.
+
+This is what the automatically generated scripts look like on the host:
+
+```
+$ tree -L 2 example
+example
+├── gr
+│   ├── mnt
+│   └── start.sh
+└── pg
+    ├── mnt
+    └── start.sh
+
+4 directories, 2 files
+```
 
 You can now access the empty dashboard at http://localhost:4600 in your
 browser. The username is `admin` and the password is `admin`.
@@ -165,7 +216,7 @@ You can also load batch commands like this by taking care to
 make them visible to the tool
 ```bash
 $ edit x.sql
-$ cp x.sql examplepg/mnt  # makes it visible as /mnt/x.sql
+$ cp x.sql example/mnt/  # makes it visible as /mnt/x.sql
 $ docker exec -it examplepg psql -d postgres -U postgres -1 < /mnt/x.sql
 ```
 

@@ -22,7 +22,8 @@ def load_version(fname: str) -> str:
     Raises:
         FileNotFoundError: If the __version__ file does not exist.
     '''
-    with open(Path(Path(__file__).parent, fname)) as ifp:
+    path = Path(Path(__file__).parent, fname)
+    with open(path, 'r', encoding='utf-8') as ifp:
         return ifp.read().strip()
 
 
