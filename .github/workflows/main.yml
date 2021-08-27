@@ -34,7 +34,7 @@ jobs:
         with:
           # Semantic version range syntax or exact version of a Python
           # version
-          python-version: '3.8'
+          python-version: '3.9'
 
       - name: 'Install pipenv'
         run: pip install pipenv
