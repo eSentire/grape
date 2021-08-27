@@ -168,7 +168,7 @@ commands to start the database and grafana containers with all
 existing data if either container is killed. Once started the
 containers _may_ take up to 30 seconds to initialize.
 
-This is what the scripts look like on the host:
+This is what the automatically generated scripts look like on the host:
 
 ```
 $ tree  -L 1 exp00 
