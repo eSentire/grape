@@ -129,9 +129,9 @@ $ pipenv run grape create -v -g 4600 -n example
 This will create two docker containers: `examplegr` which is the
 grafana server and `examplepg` which is the postgresql server.
 
-It will also create and map the local `example/mnt/pgdata` directory
+It will also create and map the local `example/pg/mnt/pgdata` directory
 to the database container to save database results and
-`example/mnt/grdata` to the grafana container to save the grafana
+`example/gr/mnt/grdata` to the grafana container to save the grafana
 dashboard data. This is done so that if the container is restarted for
 any reason the postgresql database and grafana dashboards are not
 lost. And, finally, it will connect the database as a source in the
@@ -139,13 +139,18 @@ grafana server.
 
 This is what the persistent storage looks like on the host:
 ```
-$ tree -d -L 2 example
+$ tree -L 3 example
 example
-└── mnt
-    ├── grdata  <-- grafana persistent data
-    └── pgdata  <-- postgresql persistent data
+├── gr
+│   ├── mnt
+│   │   └── grdata
+│   └── start.sh
+└── pg
+    ├── mnt
+    │   └── pgdata
+    └── start.sh
 
-3 directories
+6 directories, 2 files
 ```
 
 This the persistent storage looks like from the containers.
@@ -153,17 +158,15 @@ This the persistent storage looks like from the containers.
 ```
 $ docker exec -it examplepg ls -l /mnt
 total 0
-drwxr-xr-x  5 root     root 160 Aug 27 00:16 grdata
-drwx------ 26 postgres root 832 Aug 26 20:56 pgdata
-$ docker exec -it examplegr ls -l /mnt 
+drwx------ 26 506 dialout 832 Aug 27 16:28 pgdata
+$ docker exec -it examplegr ls -l /mnt
 total 0
-drwxr-xr-x    5 root     root           160 Aug 27 00:16 grdata
-drwx------   26 999      root           832 Aug 26 20:56 pgdata
+drwxr-xr-x    5 506      dialout        160 Aug 27 16:28 grdata
 ```
 
 It also creates the database container start script in
-`example/start-examplepg.sh` and the grafana container start script in
-`example/start-examplegr.sh`.  These scripts contain the raw docker
+`example/gr/start.sh` and the grafana container start script in
+`example/pg/start.sh`.  These scripts contain the raw docker
 commands to start the database and grafana containers with all
 existing data if either container is killed. Once started the
 containers _may_ take up to 30 seconds to initialize.
@@ -171,13 +174,16 @@ containers _may_ take up to 30 seconds to initialize.
 This is what the automatically generated scripts look like on the host:
 
 ```
-$ tree  -L 1 exp00 
-exp00
-├── mnt
-├── start-exp00gr.sh
-└── start-exp00pg.sh
+$ tree -L 2 example
+example
+├── gr
+│   ├── mnt
+│   └── start.sh
+└── pg
+    ├── mnt
+    └── start.sh
 
-1 directory, 2 files
+4 directories, 2 files
 ```
 
 You can now access the empty dashboard at http://localhost:4600 in your

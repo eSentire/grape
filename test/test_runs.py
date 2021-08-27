@@ -219,13 +219,13 @@ def test_run_create(capsys: Any, name: str, gport: int):
     sys.argv = [fct, '-v', '-n', name, '-g', str(gport)]
     create.main()
     out, err = capsys.readouterr()
-    scriptpg = os.path.join(name, f'start-{namepg}.sh')  # start script for the database
-    scriptgr = os.path.join(name, f'start-{namegr}.sh')  # start script for grafana
+    scriptpg = os.path.join(name, 'pg', 'start.sh')  # start script for the database
+    scriptgr = os.path.join(name, 'gr', 'start.sh')  # start script for grafana
     debug(f'out=[{len(out)}]<<<{out}>>>')
     debug(f'err=[{len(err)}]<<<{err}>>>')
     assert os.path.exists(name)  # make sure that the persistence store exists.
-    assert os.path.exists(os.path.join(name, 'mnt', 'pgdata'))  # database store
-    assert os.path.exists(os.path.join(name, 'mnt', 'grdata'))  # grafana store
+    assert os.path.exists(os.path.join(name, 'pg', 'mnt', 'pgdata'))  # database store
+    assert os.path.exists(os.path.join(name, 'gr', 'mnt', 'grdata'))  # grafana store
     assert os.path.exists(scriptpg)  # make sure that the database restart script was created
     assert os.path.exists(scriptgr)  # make sure that the grafana restart script was created
     assert namegr in err
@@ -261,8 +261,8 @@ def test_run_save(capsys: Any, name: str, gport: int):
     out, err = capsys.readouterr()
     debug(f'out=[{len(out)}]<<<{out}>>>')
     debug(f'err=[{len(err)}]<<<{err}>>>')
-    assert os.path.exists(os.path.join(name, 'mnt', 'pgdata'))  # database store
-    assert os.path.exists(os.path.join(name, 'mnt', 'grdata'))  # grafana store
+    assert os.path.exists(os.path.join(name, 'pg', 'mnt', 'pgdata'))  # database store
+    assert os.path.exists(os.path.join(name, 'gr', 'mnt', 'grdata'))  # grafana store
     assert os.path.exists(namezp)
     assert 'docker exec' in err
     assert '1 datasources' in err
@@ -377,7 +377,7 @@ def test_run_export(capsys: Any, name: str, name2: str, gport2: int):
 
     # Prerequisites.
     assert os.path.exists(namezp)  # the import zip.
-    assert os.path.exists(os.path.join(name2, 'mnt', 'pgdata'))  # database store for name2
+    assert os.path.exists(os.path.join(name2, 'pg', 'mnt', 'pgdata'))  # database store for name2
 
     # Create the YAML conf file for logging in.
     xcfn = fct + '.yaml'
@@ -414,10 +414,10 @@ def test_run_status(capsys: Any, name: str, name2: str):
     fct = inspect.stack()[0].function
 
     # Prerequisites.
-    assert os.path.exists(os.path.join(name, 'mnt', 'pgdata'))  # database store
-    assert os.path.exists(os.path.join(name, 'mnt', 'grdata'))  # grafana store
-    assert os.path.exists(os.path.join(name2, 'mnt', 'pgdata'))  # database store
-    assert os.path.exists(os.path.join(name2, 'mnt', 'grdata'))  # grafana store
+    assert os.path.exists(os.path.join(name, 'pg','mnt', 'pgdata'))  # database store
+    assert os.path.exists(os.path.join(name, 'gr', 'mnt', 'grdata'))  # grafana store
+    assert os.path.exists(os.path.join(name2, 'pg', 'mnt', 'pgdata'))  # database store
+    assert os.path.exists(os.path.join(name2, 'gr', 'mnt', 'grdata'))  # grafana store
 
     sys.argv = [fct, '-v']
     status.main()
@@ -449,8 +449,8 @@ def test_run_tree(capsys: Any, name: str, gport: int):
     fct = inspect.stack()[0].function
 
     # Prerequisites.
-    assert os.path.exists(os.path.join(name, 'mnt', 'pgdata'))  # database store
-    assert os.path.exists(os.path.join(name, 'mnt', 'grdata'))  # grafana store
+    assert os.path.exists(os.path.join(name, 'pg', 'mnt', 'pgdata'))  # database store
+    assert os.path.exists(os.path.join(name, 'gr', 'mnt', 'grdata'))  # grafana store
 
     # Negative test.
     with pytest.raises(SystemExit) as exc:
@@ -595,8 +595,8 @@ def test_run_dash_import_csv(capsys, name: str, gport: int):
 
     # Verify that the data files exist.
     assert os.path.exists(name)  # make sure that the persistence store exists.
-    assert os.path.exists(os.path.join(name, 'mnt', 'pgdata'))  # database store
-    assert os.path.exists(os.path.join(name, 'mnt', 'grdata'))  # grafana store
+    assert os.path.exists(os.path.join(name, 'pg', 'mnt', 'pgdata'))  # database store
+    assert os.path.exists(os.path.join(name, 'gr', 'mnt', 'grdata'))  # grafana store
     assert os.path.exists(csvfile)
     assert os.path.exists(dashfile)
 
@@ -611,7 +611,7 @@ def test_run_dash_import_csv(capsys, name: str, gport: int):
             assert proc.returncode == 0
 
     # Create the SQL file with the correct file.
-    sqlfile = os.path.join(testdir, name, 'mnt', 'test_run_dash_import_csv.sql')
+    sqlfile = os.path.join(testdir, name, 'pg', 'mnt', 'test_run_dash_import_csv.sql')
     debug(f'sqlfile={sqlfile}')
     with Popen([script1,
                 '-v',

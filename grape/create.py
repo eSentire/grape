@@ -58,16 +58,18 @@ VERSION:
     return opts
 
 
-def create_start(kconf: dict):
+def create_start(conf: dict, key: str):
     '''Create the start script.
 
     Args:
-        kconf: The configuration data for a key.
+        kconf: The configuration data.
+        key: pg or gr.
     '''
     # Create the start script.
+    kconf = conf[key]
     base = kconf['base']
     name = kconf['name']
-    fname = os.path.join(os.getcwd(), f'{base}/start-{name}.sh')
+    fname = os.path.join(os.getcwd(), base, key, 'start.sh')
     if os.path.exists(fname):
         return
 
@@ -161,8 +163,11 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
         # only cares about the total time.
         try:
             cobj = client.containers.get(name)
-        except docker.errors.NotFound as exc:
-            err(f'container failed to initialize: "{name}" - {exc}')
+        except docker.errors.DockerException as exc:
+            logs = cobj.logs().decode('utf-8')  # provide the full log
+            ##clist = [f'{c.name}:{c.short_id}:{c.status}'
+            # for c in client.containers.list(all=True)]
+            err(f'container failed to initialize: "{name}" - {exc}\n{logs}')
 
         # Read the container logs.
         start = time.time()
@@ -180,8 +185,9 @@ def create_container_init(conf: dict, waitval: float):  # pylint: disable=too-ma
                         break
                 if done:
                     break
-            except docker.errors.NotFound as exc:
-                err(f'container failed to initialize: "{name}" - {exc}')
+            except docker.errors.DockerException as exc:
+                logs = cobj.logs().decode('utf-8')  # provide the full log
+                err(f'container failed to initialize: "{name}" - {exc}\n{logs}')
 
             elapsed = time.time() - start
             if elapsed <= waitval:
@@ -203,8 +209,8 @@ def create_containers(conf: dict, wait: float):
         conf: The configuration data.
         wait: The container create wait time.
     '''
-    create_start(conf['pg'])  # postgresql
-    create_start(conf['gr'])  # grafana
+    create_start(conf, 'pg')  # postgresql
+    create_start(conf, 'gr')  # grafana
     client = docker.from_env()
     num = 0
     for key in ['gr', 'pg']:
@@ -226,15 +232,22 @@ def create_containers(conf: dict, wait: float):
 
         ports = kconf['ports']
         info(f'creating container "{cname}": {ports}')
-        client.containers.run(image=kconf['image'],
-                              hostname=kconf['name'],
-                              name=kconf['name'],
-                              remove=kconf['remove'],
-                              detach=kconf['detach'],
-                              labels=kconf['labels'],
-                              ports=ports,
-                              environment=kconf['env'],
-                              volumes=kconf['vols'])
+        try:
+            cobj = client.containers.run(image=kconf['image'],
+                                         hostname=kconf['name'],
+                                         name=kconf['name'],
+                                         remove=kconf['remove'],
+                                         detach=kconf['detach'],
+                                         labels=kconf['labels'],
+                                         ports=ports,
+                                         stdout=True,
+                                         stderr=False,
+                                         user=kconf['user'],
+                                         environment=kconf['env'],
+                                         volumes=kconf['vols'])
+        except docker.errors.DockerException as exc:
+            logs = cobj.logs().decode('utf-8')
+            err(f'container failed to run: "{cname}" - {exc}:\n{logs}\n')
         num += 1
 
     if wait:

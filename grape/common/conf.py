@@ -32,9 +32,9 @@ def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> Dict[str, An
     '''
     grname = bname + 'gr'
     pgname = bname + 'pg'
-    grpath_share = os.path.join(os.getcwd(), bname)
+    grpath_share = os.path.join(os.getcwd(), bname, 'gr')
     grpath_mnt = os.path.join(grpath_share, 'mnt')
-    pgpath_share = os.path.join(os.getcwd(), bname)
+    pgpath_share = os.path.join(os.getcwd(), bname, 'pg')
     pgpath_mnt = os.path.join(pgpath_share, 'mnt')
     conf : Dict[str, Any] = {
         'timestamp': datetime.datetime.utcnow().isoformat(timespec='seconds'),
@@ -81,6 +81,7 @@ def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> Dict[str, An
             'env': [
                 'GF_PATHS_DATA=/mnt/grdata',
             ],
+            'user': f'{os.getuid()}:{os.getgid()}',
         },
         'pg': {
             'base': bname,
@@ -109,6 +110,7 @@ def get_conf(bname: str, fname: str, grxport: int, pgxport: int) -> Dict[str, An
             'username': 'postgres',
             'password': 'password',
             'host': 'localhost',
+            'user': f'{os.getuid()}:{os.getgid()}',
         },
     }
 
