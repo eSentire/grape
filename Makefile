@@ -36,11 +36,11 @@ clean:  ## Clean up. If clean fails, try "sudo make clean".
 
 # pkg
 .PHONY: pkg
-pkg: init .wheel-install  ## Build the grape package wheel (same as wheel).
+pkg: init wheel-install  ## Build the grape package wheel (same as wheel).
 
 # wheel
 .PHONY: wheel
-wheel: .wheel-install  ## Build the grape package wheel (same as pkg).
+wheel: wheel-install  ## Build the grape package wheel (same as pkg).
 
 # test
 # initialize before each run
@@ -117,15 +117,6 @@ help:  ## This help message.
 		column -t -s '##' | \
 		sort -f | \
 		sed -e 's@^@   @'
-
-# Make wheel with pylint and type checking that only run when updates
-# are detected.
-.wheel-install: $(WHEEL_DEPS)
-	$(call hdr,"package")
-	pipenv run pylint --disable=duplicate-code $(SRCS)
-	pipenv run mypy --install-types $(SRCS)
-	$(MAKE) wheel-install
-	touch $@
 
 # Low level wheel targets.
 .PHONY: wheel-install
