@@ -129,6 +129,12 @@ $ pipenv run grape create -v -g 4600 -n example
 This will create two docker containers: `examplegr` which is the
 grafana server and `examplepg` which is the postgresql server.
 
+If the docker containers were previously killed because of something
+like a system crash, `grape create` will restart them in the same
+state. The grafana dashboards and postgresql database contents will
+not be lost. Beware that the `grape delete` operation _will_ destroy the
+state data.
+
 It will also create and map the local `example/pg/mnt/pgdata` directory
 to the database container to save database results and
 `example/gr/mnt/grdata` to the grafana container to save the grafana

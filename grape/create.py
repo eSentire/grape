@@ -1,9 +1,27 @@
 '''
-Creates a docker containers for grafana and a docker container for
-postgres.
+Creates a docker container for grafana, a docker container for
+postgresql and connects them so that the postgresql container
+database becomes a datasource in the grafana container.
 
-It then sets the datasource in the grafana server and creates a local
-directory to save the postgres state.
+The container names have a pg and gr suffix to denote which
+service they are running.
+
+It also creates a local directory to save the
+postgres database state and the grafana dashboard state
+and creates startup scripts for each dashboard in the local
+directory.
+
+If the docker containers were previously killed because of something
+like a system crash, `grape create` will restart them in the same
+state. The grafana dashboards and postgresql database contents will
+not be lost. Beware that the `grape delete` operation will destroy the
+state data.
+
+The local directory has the same name as the name of the project.  It
+container two subdirectories: gr for grafana dashboard data and pg for
+postgresql data. There is a `start.sh` script in each of them for their
+respective containers. There are also other directories that are
+specific to the storage systems for grafana and postgresql.
 '''
 import argparse
 import os

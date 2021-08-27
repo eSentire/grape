@@ -1,6 +1,7 @@
 '''
 The delete operation deletes all artifacts created by the create
-operation.
+operation. All grafana dashboard and postgresql database data is
+deleted.
 '''
 import argparse
 import os
