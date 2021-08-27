@@ -35,7 +35,7 @@ setup(
         'Programming Language :: Python :: 3',
         ],
     keywords='grafana postgres modeling prototype',
-    python_requires='>=3.8, <4',
+    python_requires='>=3.9, <4',
     install_requires=['docker',
                       'psycopg2-binary',
                       'PyYAML',
