@@ -79,16 +79,16 @@ To use this you must have:
 1. docker (https://docs.docker.com/get-docker/)
    1. The `docker` group must be available on linux.
 1. bash
-   1. If you are running on windows you need a run-time like cygwin.
+   1. If you are running on windows you will need WSL2 or a linux VM.
    1. It is only needed for the samples.
 1. python-3.8 or later
    1. This is because the log module uses the logger stacklevel argument.
 1. pipenv
-1. git (https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-1. make
-   1. If you are running on windows you need a run-time like cygwin.
+1. A recent version of git
+1. gnu make
+   1. If you are running on windows you will need WSL2 or a linux VM.
 1. unzip
-   1. If you are running on windows you need a run-time like cygwin.
+   1. If you are running on windows you will need WSL2 or a linux VM.
 1. sudo
    1. On linux, the program must be able to rm the database volume mount.
 
@@ -105,9 +105,9 @@ $ make
 To see all of the available make targets: `make help`.
 
 > On windows you may have to run something like dos2unix
-> to convert the bash shell scripts that are used to run
-> the demos in `samples/*/run.sh`. This will enable commands
-> like `make demo01` to work.
+> to convert the bash shell scripts or use WSL2 or a linux VM
+> to run > the demos in `samples/*/run.sh`. This will enable
+>  commands like `make demo01` to work.
 
 
 ### Help
