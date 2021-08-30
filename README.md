@@ -39,25 +39,27 @@ Grafana Prototyping Environment
 
 ### Overview
 This repository contains a tool named `grape` that allows you to
-create a local Grafana visualization model prototype using docker
-containers, save an existing model and load a saved environment
-without having to install any Grafana or database specific software.
+_quickly_ create a local grafana visualization development environment
+using `docker` containers for the grafana server and the postgresql database
+which relieves you from having to install and configured grafana or postgresql
+yourself.
 
-It can also be used to import external environments, modify them and
-then export them back to enable isolation for development. The state
-data can be stored in a repository to enable version control.
+It is more than a simple wrapper around `docker build` and `docker run`
+commands because it provides additional services. For example it can also
+be used to import external environments, modify them and then export them
+back to enable isolation for development.
 
 In addition, a set of samples is provided that demonstrate how to use
 the tool for common operations.
 
-The audience for this tool is folks who want to play around with
-Grafana without having to set it up. As long as you have docker
+The primary audience for this tool is folks who want to play around
+with grafana without having to set it up. As long as you have docker
 you are good to go.
 
 I use it to experiment on production environments by using the
 import capability to duplicate the system of interest locally
 (on my laptop) with the caveat that you must know the passwords
-for the data sources because Grafana filters them out of the REST
+for the data sources because grafana filters them out of the REST
 responses.
 
 I also use it to test out new ideas. Typically i spin up an environment
