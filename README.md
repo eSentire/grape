@@ -44,6 +44,10 @@ using `docker` containers for the grafana server and the postgresql database
 which relieves you from having to install and configured grafana or postgresql
 yourself.
 
+> NOTE: if you are interested in how to run a grafana server and postgres database
+> in containers and connect them manually without a wrapper please see
+> [this](#https://gist.github.com/jlinoff/6e2127ee8b9522da9bc20b20be980818) gist.
+
 It is more than a simple wrapper around `docker build` and `docker run`
 commands because it provides additional services. For example it can also
 be used to import external environments, modify them and then export them
